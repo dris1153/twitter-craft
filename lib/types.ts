@@ -1,0 +1,77 @@
+import { z } from 'zod';
+
+const MAX_TEXT = 30_000;
+const HANDLE = /^[A-Za-z0-9_]{0,15}$/;
+
+export const TweetSchema = z.object({
+  id: z.string().regex(/^\d{1,25}$/),
+  url: z.string().regex(/^https:\/\/x\.com\/[A-Za-z0-9_]{1,15}\/status\/\d{1,25}$/),
+  authorHandle: z.string().regex(HANDLE),
+  authorName: z.string().max(200),
+  isProtected: z.boolean(),
+  text: z.string().max(MAX_TEXT),
+  truncated: z.boolean(),
+  lang: z.string().max(10),
+  quoted: z
+    .object({ authorHandle: z.string().regex(HANDLE), text: z.string().max(MAX_TEXT), isProtected: z.boolean() })
+    .nullable(),
+  hasMedia: z.boolean(),
+  mediaUrls: z.array(z.string().startsWith('https://pbs.twimg.com/').max(500)).max(4),
+  mediaAlt: z.array(z.string().max(1000)).max(4),
+  createdAt: z.string().max(40),
+  metrics: z.object({ replies: z.number(), reposts: z.number(), likes: z.number(), views: z.number() }),
+  isReply: z.boolean(),
+  isAd: z.boolean(),
+});
+export type Tweet = z.infer<typeof TweetSchema>;
+
+export const TRIAGE_ACTIONS = ['reply', 'quote', 'retweet', 'save_idea', 'skip'] as const;
+export const TRIAGE_TOPICS = [
+  'ai_ml', 'llm_agents', 'web_dev', 'devops_infra', 'languages', 'career', 'startup', 'off_topic',
+] as const;
+
+export const TriageSchema = z.object({
+  id: z.string().regex(/^\d{1,25}$/),
+  quality: z.number().min(0).max(1),
+  action: z.enum(TRIAGE_ACTIONS),
+  topic: z.enum(TRIAGE_TOPICS),
+  replyOpening: z.number().min(0).max(1),
+  projectMatch: z.string().max(80),
+  buildIdea: z.number().min(0).max(1),
+  botInstructions: z.number().min(0).max(1),
+  uncertain: z.boolean(),
+});
+export type Triage = z.infer<typeof TriageSchema>;
+
+export type TriageError = 'no_key' | 'rate_limited' | 'http' | 'invalid' | 'dropped';
+
+export const ProjectSchema = z.object({
+  name: z.string().min(1).max(80),
+  description: z.string().max(500),
+  url: z.string().max(300),
+});
+export type Project = z.infer<typeof ProjectSchema>;
+
+export const SettingsSchema = z.object({
+  openaiKey: z.string().default(''),
+  jevKey: z.string().default(''),
+  draftModel: z.string().default('gpt-5.6-terra'),
+  ideaModel: z.string().default('gpt-5.6-luna'),
+  handle: z.string().default(''),
+  persona: z.string().default(''),
+  voiceSamples: z.array(z.string()).default([]),
+  interests: z.array(z.string()).default(['AI engineering', 'LLM agents', 'web development', 'developer tools']),
+  projects: z.array(ProjectSchema).default([]),
+  bannedPhrases: z
+    .array(z.string())
+    .default(['Great insight', 'Game changer', 'This is huge', 'Couldn\'t agree more', 'Love this']),
+  maxReplyChars: z.number().int().min(50).max(25_000).default(280),
+  readableLanguages: z.array(z.string()).default(['en', 'vi']),
+  minQuality: z.number().min(0).max(100).default(40),
+  dimLowScore: z.boolean().default(true),
+  debug: z.boolean().default(false),
+});
+export type Settings = z.infer<typeof SettingsSchema>;
+
+export const DisplayPrefsSchema = SettingsSchema.pick({ minQuality: true, dimLowScore: true, debug: true });
+export type DisplayPrefs = z.infer<typeof DisplayPrefsSchema>;
