@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { IdeaEditor } from '@/components/idea-editor';
 import { ACCENTS, type Accent } from '@/components/panel-card';
 import { Button } from '@/components/ui/button';
+import { useT } from '@/hooks/use-i18n';
 import { removeIdea, updateIdea } from '@/lib/ideas-store';
 import { IDEA_STATUSES, X_STATUS_URL, type Idea, type IdeaStatus } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -11,6 +12,7 @@ const STATUS_ACCENT: Record<IdeaStatus, Accent> = { new: 'sky', reviewing: 'mari
 export function IdeaRow({ idea, expanded, onToggle }: { idea: Idea; expanded: boolean; onToggle: () => void }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState('');
+  const t = useT();
   // The editor stays mounted after closing so the accordion can animate the close. Each open bumps
   // the key, so the form reloads from the stored idea (it may have changed in another window).
   const [openSeq, setOpenSeq] = useState(expanded ? 1 : 0);
@@ -22,7 +24,7 @@ export function IdeaRow({ idea, expanded, onToggle }: { idea: Idea; expanded: bo
   useEffect(() => {
     if (!expanded) setConfirmDelete(false);
   }, [expanded]);
-  const report = (p: Promise<unknown>) => void p.then(() => setError(''), (e: unknown) => setError(`Could not save: ${String(e)}`));
+  const report = (p: Promise<unknown>) => void p.then(() => setError(''), (e: unknown) => setError(t('common.couldNotSave', { error: String(e) })));
 
   return (
     <li
@@ -32,7 +34,7 @@ export function IdeaRow({ idea, expanded, onToggle }: { idea: Idea; expanded: bo
       <div className="flex items-start gap-2 p-3">
         <button type="button" aria-expanded={expanded} onClick={onToggle} className="flex min-w-0 flex-1 items-start gap-2 text-left">
           <span className="min-w-0 flex-1">
-            <span className="block truncate font-semibold">{idea.title || 'Untitled idea'}</span>
+            <span className="block truncate font-semibold">{idea.title || t('ideas.untitled')}</span>
             <span className="block truncate text-[11px] text-ink-muted">
               @{idea.sourceAuthor} · {idea.createdAt.slice(0, 10)}
               {idea.tags.length > 0 && ` · ${idea.tags.join(', ')}`}
@@ -43,14 +45,14 @@ export function IdeaRow({ idea, expanded, onToggle }: { idea: Idea; expanded: bo
           </svg>
         </button>
         <select
-          aria-label="Status"
+          aria-label={t('ideas.status')}
           value={idea.status}
           onChange={(e) => report(updateIdea(idea.id, { status: e.target.value as IdeaStatus }))}
           style={{ background: ACCENTS[STATUS_ACCENT[idea.status]] }}
           className="rounded-sm border-[1.5px] border-ink px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-[0.06em] text-[#383838] uppercase"
         >
           {IDEA_STATUSES.map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>{t(`status.${s}`)}</option>
           ))}
         </select>
       </div>
@@ -64,7 +66,7 @@ export function IdeaRow({ idea, expanded, onToggle }: { idea: Idea; expanded: bo
               <div className="flex flex-wrap gap-2">
                 {X_STATUS_URL.test(idea.sourceUrl) && (
                   <Button size="sm" variant="outline" asChild>
-                    <a href={idea.sourceUrl} target="_blank" rel="noreferrer">Open post</a>
+                    <a href={idea.sourceUrl} target="_blank" rel="noreferrer">{t('ideas.openPost')}</a>
                   </Button>
                 )}
                 <Button
@@ -72,7 +74,7 @@ export function IdeaRow({ idea, expanded, onToggle }: { idea: Idea; expanded: bo
                   variant={confirmDelete ? 'destructive' : 'ghost'}
                   onClick={() => (confirmDelete ? report(removeIdea(idea.id)) : setConfirmDelete(true))}
                 >
-                  <span key={String(confirmDelete)} className="t-text-swap">{confirmDelete ? 'Delete for good' : 'Delete'}</span>
+                  <span key={String(confirmDelete)} className="t-text-swap">{confirmDelete ? t('ideas.confirmDelete') : t('ideas.delete')}</span>
                 </Button>
               </div>
             </div>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { draftErrorText } from '@/lib/draft-generator';
 import { expandIdea } from '@/lib/idea-expander';
+import { t as translate } from '@/lib/i18n';
 import { addIdea, findBySource, ideasItem, listIdeas } from '@/lib/ideas-store';
 import { expandInTab } from '@/lib/panel-to-tab';
 import type { Idea, IdeaDraft, Tweet } from '@/lib/types';
@@ -84,7 +85,7 @@ export function useIdeaCapture() {
       });
       setCapture((cur) => (cur?.seq === c.seq ? null : cur)); // a newer capture may have started meanwhile
     } catch (err) {
-      const message = `Could not save: ${err instanceof Error ? err.message : String(err)}`;
+      const message = translate('common.couldNotSave', { error: err instanceof Error ? err.message : String(err) });
       setCapture((cur) => (cur?.seq === c.seq ? { ...cur, error: message } : cur));
     }
   };

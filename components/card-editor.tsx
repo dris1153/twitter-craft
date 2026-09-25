@@ -1,13 +1,8 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useT } from '@/hooks/use-i18n';
 import type { Card } from '@/lib/types';
-
-const HINT: Record<Card['kind'], string> = {
-  insight: 'One takeaway per line (max 4)',
-  code: 'Code (max 12 lines)',
-  compare: 'First line: Column A | Column B. Then one row per line: label | A | B (max 5)',
-};
 
 const cells = (line: string) => line.split('|').map((c) => c.trim());
 
@@ -34,16 +29,18 @@ const LIMIT: Record<Card['kind'], number> = { insight: 4, code: 12, compare: 6 }
 export function CardEditor({ card, onChange }: { card: Card; onChange: (card: Card) => void }) {
   // Keep the raw text so typing a half-finished "a |" line doesn't get reformatted under the cursor.
   const [body, setBody] = useState(() => bodyText(card));
+  const t = useT();
+  const hint = t(`card.hint.${card.kind}`);
   const lineCount = body.split('\n').filter((l) => card.kind === 'code' || l.trim()).length;
   return (
     <div className="space-y-2">
-      <Input aria-label="Card title" value={card.title} onChange={(e) => onChange({ ...card, title: e.target.value })} />
+      <Input aria-label={t('card.fieldTitle')} value={card.title} onChange={(e) => onChange({ ...card, title: e.target.value })} />
       {card.kind === 'code' && (
-        <Input aria-label="Language" value={card.lang} onChange={(e) => onChange({ ...card, lang: e.target.value })} />
+        <Input aria-label={t('card.fieldLanguage')} value={card.lang} onChange={(e) => onChange({ ...card, lang: e.target.value })} />
       )}
       <Textarea
-        aria-label={HINT[card.kind]}
-        placeholder={HINT[card.kind]}
+        aria-label={hint}
+        placeholder={hint}
         rows={card.kind === 'code' ? 8 : 5}
         className={card.kind === 'code' ? 'font-mono text-xs' : ''}
         value={body}
@@ -53,8 +50,8 @@ export function CardEditor({ card, onChange }: { card: Card; onChange: (card: Ca
         }}
       />
       <p className="text-[11px] text-ink-muted">
-        {HINT[card.kind]}
-        {lineCount > LIMIT[card.kind] && <span className="text-danger"> · extra lines are left off the card</span>}
+        {hint}
+        {lineCount > LIMIT[card.kind] && <span className="text-danger">{t('card.extraLines')}</span>}
       </p>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useT } from '@/hooks/use-i18n';
 import type { IdeaDraft } from '@/lib/types';
 
 export type IdeaFields = IdeaDraft & { notes?: string };
@@ -40,6 +41,7 @@ export function IdeaEditor({ initial, showNotes, onChange, onCommit }: {
   onCommit?: (v: IdeaFields) => void;
 }) {
   const [form, setForm] = useState<Form>(() => toForm(initial));
+  const t = useT();
   const committed = useRef(JSON.stringify(fromForm(toForm(initial))));
   const commit = (f: Form) => {
     const value = fromForm(f);
@@ -65,14 +67,14 @@ export function IdeaEditor({ initial, showNotes, onChange, onCommit }: {
 
   return (
     <div className="space-y-3">
-      <Row label="Title"><Input {...bind('title')} /></Row>
-      <Row label="Problem"><Textarea rows={2} {...bind('problem')} /></Row>
-      <Row label="Insight from the post"><Textarea rows={2} {...bind('insight')} /></Row>
-      <Row label="MVP steps (one per line)"><Textarea rows={4} {...bind('mvpScope')} /></Row>
-      <Row label="Stack (comma-separated)"><Input {...bind('stack')} /></Row>
-      <Row label="How to share it on X"><Textarea rows={2} {...bind('promo')} /></Row>
-      <Row label="Tags (comma-separated)"><Input {...bind('tags')} /></Row>
-      {showNotes && <Row label="Your notes"><Textarea rows={3} {...bind('notes')} /></Row>}
+      <Row label={t('idea.title')}><Input {...bind('title')} /></Row>
+      <Row label={t('idea.problem')}><Textarea rows={2} {...bind('problem')} /></Row>
+      <Row label={t('idea.insight')}><Textarea rows={2} {...bind('insight')} /></Row>
+      <Row label={t('idea.mvp')}><Textarea rows={4} {...bind('mvpScope')} /></Row>
+      <Row label={t('idea.stack')}><Input {...bind('stack')} /></Row>
+      <Row label={t('idea.promo')}><Textarea rows={2} {...bind('promo')} /></Row>
+      <Row label={t('idea.tags')}><Input {...bind('tags')} /></Row>
+      {showNotes && <Row label={t('idea.notes')}><Textarea rows={3} {...bind('notes')} /></Row>}
     </div>
   );
 }

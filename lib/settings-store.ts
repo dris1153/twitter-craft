@@ -1,4 +1,5 @@
 import { storage } from 'wxt/utils/storage';
+import type { UiLanguage } from './languages';
 import { SettingsSchema, type DisplayPrefs, type Settings } from './types';
 
 // Holds API keys: only readable from extension pages/SW (background sets TRUSTED_CONTEXTS access level).
@@ -30,8 +31,13 @@ export async function addVoiceSample(text: string): Promise<void> {
   await saveSettings({ ...s, voiceSamples: samples });
 }
 
+// Saved on its own (applies instantly), so it never writes the Settings form's unsaved edits.
+export async function setUiLanguage(uiLanguage: UiLanguage): Promise<void> {
+  await saveSettings({ ...(await getSettings()), uiLanguage });
+}
+
 export function toDisplayPrefs(s: Settings): DisplayPrefs {
-  return { minQuality: s.minQuality, dimLowScore: s.dimLowScore, debug: s.debug };
+  return { minQuality: s.minQuality, dimLowScore: s.dimLowScore, debug: s.debug, uiLanguage: s.uiLanguage };
 }
 
 // Triage cache key includes this, so editing interests/projects re-triages instead of serving stale answers.

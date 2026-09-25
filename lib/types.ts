@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { browserUiLanguage, UI_LANGUAGES } from './languages';
 
 const MAX_TEXT = 30_000;
 const HANDLE = /^[A-Za-z0-9_]{0,15}$/;
@@ -69,13 +70,14 @@ export const SettingsSchema = z.object({
   maxReplyChars: z.number().int().min(50).max(25_000).default(280),
   readableLanguages: z.array(z.string()).default(['en', 'vi']),
   ideaLanguage: z.string().default('vi'),
+  uiLanguage: z.enum(UI_LANGUAGES).default(browserUiLanguage),
   minQuality: z.number().min(0).max(100).default(40),
   dimLowScore: z.boolean().default(true),
   debug: z.boolean().default(false),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 
-export const DisplayPrefsSchema = SettingsSchema.pick({ minQuality: true, dimLowScore: true, debug: true });
+export const DisplayPrefsSchema = SettingsSchema.pick({ minQuality: true, dimLowScore: true, debug: true, uiLanguage: true });
 export type DisplayPrefs = z.infer<typeof DisplayPrefsSchema>;
 
 // Casual angles on purpose: "insight"/"practical" pushed the model into lecturing (user feedback).

@@ -5,10 +5,11 @@ import { SectionTitle } from '@/components/panel-card';
 import { TweetEmbed } from '@/components/tweet-embed';
 import { Button } from '@/components/ui/button';
 import type { useDraftSession, VariantKey } from '@/hooks/use-draft-session';
+import { useT } from '@/hooks/use-i18n';
 import { cardImageFor, type CardRenderState } from '@/lib/card-attach';
 import { checkCard } from '@/lib/draft-safety-checks';
 import type { InsertMode } from '@/lib/messages';
-import { GIF_MESSAGES, INSERT_MESSAGES, insertIntoTab, openGifInTab } from '@/lib/panel-to-tab';
+import { insertIntoTab, openGifInTab } from '@/lib/panel-to-tab';
 import { addVoiceSample } from '@/lib/settings-store';
 
 type Props = ReturnType<typeof useDraftSession>;
@@ -19,12 +20,13 @@ export function DraftView(props: Props) {
   const [cardState, setCardState] = useState<CardRenderState | null>(null);
   const [inserting, setInserting] = useState(false);
   const [confirmRegen, setConfirmRegen] = useState(false);
+  const t = useT();
 
   if (!session) {
     return (
       <div className="space-y-1 p-6 text-center">
-        <p className="font-mono text-sm font-semibold">No draft yet</p>
-        <p className="text-xs text-ink-muted">Click “Draft” on a tweet badge in your X feed.</p>
+        <p className="font-mono text-sm font-semibold">{t('draft.emptyTitle')}</p>
+        <p className="text-xs text-ink-muted">{t('draft.emptyHint')}</p>
       </div>
     );
   }
@@ -37,14 +39,14 @@ export function DraftView(props: Props) {
     setCardState(state);
     if (state.status === 'failed' && s.attachCard) {
       setAttachCard(false); // never leave Insert blocked on an image that won't come
-      setToast('Card image failed to render, so it was unticked. Replies go in as text only.');
+      setToast(t('draft.cardFailedUnticked'));
     }
   };
 
-  const copy = (text: string, message = 'Copied.') => {
+  const copy = (text: string, message = t('common.copied')) => {
     navigator.clipboard.writeText(text).then(
       () => setToast(message),
-      () => setToast('Clipboard blocked; select the text and copy it manually.'),
+      () => setToast(t('common.clipboardBlocked')),
     );
   };
 
@@ -53,18 +55,18 @@ export function DraftView(props: Props) {
     const copied = navigator.clipboard.writeText(text).then(() => true, () => false);
     const tweetId = s.tweet.id;
     setInserting(true);
-    setToast('Inserting…');
+    setToast(t('draft.inserting'));
     void Promise.all([insertIntoTab(s.tabId, tweetId, mode, text, cardImage.image), copied]).then(([outcome, ok]) => {
       setInserting(false);
-      const fallback = ok ? '' : ' (Clipboard was blocked: use the Copy button.)';
-      setToast(INSERT_MESSAGES[outcome] + (outcome === 'inserted' ? '' : fallback));
+      const fallback = ok ? '' : t('draft.clipboardFallback');
+      setToast(t(`insert.${outcome}`) + (outcome === 'inserted' ? '' : fallback));
       if (outcome === 'inserted' || outcome === 'image_failed') update(key, { inserted: true }, tweetId);
     });
   };
 
   const addGif = (query: string) => {
     void navigator.clipboard.writeText(query).catch(() => {}); // fallback if the picker can't be driven
-    void openGifInTab(s.tabId, query).then((r) => setToast(GIF_MESSAGES[r]));
+    void openGifInTab(s.tabId, query).then((r) => setToast(t(`gif.${r}`)));
   };
 
   const regenerateClicked = () => {
@@ -98,31 +100,31 @@ export function DraftView(props: Props) {
     <div className="space-y-5 p-4 pb-20">
       {queued && (
         <div className="space-y-2 rounded-sm border-2 border-ink bg-canary p-3 text-xs text-[#383838]">
-          <p>New tweet selected (@{queued.tweet.authorHandle}). Discard your edited drafts?</p>
+          <p>{t('draft.queued', { handle: queued.tweet.authorHandle })}</p>
           <div className="flex gap-2">
-            <Button size="xs" onClick={acceptQueued}>Switch</Button>
-            <Button size="xs" variant="outline" onClick={dismissQueued}>Keep editing</Button>
+            <Button size="xs" onClick={acceptQueued}>{t('common.switch')}</Button>
+            <Button size="xs" variant="outline" onClick={dismissQueued}>{t('common.keepEditing')}</Button>
           </div>
         </div>
       )}
 
       <TweetEmbed tweet={s.tweet} note={s.note} />
 
-      {s.status === 'loading' && <p className="t-shimmer font-mono text-xs" data-text="Drafting replies…">Drafting replies…</p>}
+      {s.status === 'loading' && <p className="t-shimmer font-mono text-xs" data-text={t('draft.loading')}>{t('draft.loading')}</p>}
       {s.status === 'error' && <p className="rounded-sm border-2 border-ink bg-coral/25 p-3 text-xs">{s.error}</p>}
       {s.status === 'ready' && s.skipReason && s.variants.length === 0 && (
-        <p className="text-xs text-ink-muted">Nothing worth adding: {s.skipReason}</p>
+        <p className="text-xs text-ink-muted">{t('draft.nothingToAdd', { reason: s.skipReason })}</p>
       )}
 
       {s.variants.length > 0 && (
         <div className="space-y-3">
-          <SectionTitle>Replies</SectionTitle>
+          <SectionTitle>{t('draft.replies')}</SectionTitle>
           {s.variants.map((_, i) => editor(i))}
         </div>
       )}
       {s.quote && (
         <div className="space-y-3">
-          <SectionTitle>Suggested quote post</SectionTitle>
+          <SectionTitle>{t('draft.suggestedQuote')}</SectionTitle>
           {editor('quote')}
         </div>
       )}
@@ -145,12 +147,12 @@ export function DraftView(props: Props) {
         <div className="flex flex-wrap gap-3">
           {/* X takes one image or one GIF: no GIF button while the card is attached. */}
           {s.gifQuery && !(s.attachCard && s.card) && (
-            <Button size="sm" variant="outline" disabled={inserting} onClick={() => addGif(s.gifQuery!)} title="Opens X's GIF picker in the open reply box">
+            <Button size="sm" variant="outline" disabled={inserting} onClick={() => addGif(s.gifQuery!)} title={t('draft.gifTitle')}>
               GIF · {s.gifQuery}
             </Button>
           )}
           <Button variant={confirmRegen ? 'destructive' : 'secondary'} size="sm" onClick={regenerateClicked}>
-            <span key={String(confirmRegen)} className="t-text-swap">{confirmRegen ? 'Discard edits and regenerate' : 'Regenerate'}</span>
+            <span key={String(confirmRegen)} className="t-text-swap">{confirmRegen ? t('draft.confirmRegenerate') : t('draft.regenerate')}</span>
           </Button>
         </div>
       )}

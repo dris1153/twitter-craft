@@ -1,3 +1,4 @@
+import type { UiLanguage } from './languages';
 import { SettingsSchema, type Settings } from './types';
 
 export type SettingsForm = {
@@ -12,8 +13,9 @@ export type SettingsForm = {
   projects: string;
   bannedPhrases: string;
   maxReplyChars: string;
-  readableLanguages: string;
+  readableLanguages: string[];
   ideaLanguage: string;
+  uiLanguage: UiLanguage;
   minQuality: string;
   dimLowScore: boolean;
   debug: boolean;
@@ -32,7 +34,6 @@ export function toForm(s: Settings): SettingsForm {
     projects: s.projects.map((p) => [p.name, p.description, p.url].join(' | ')).join('\n'),
     bannedPhrases: s.bannedPhrases.join('\n'),
     maxReplyChars: String(s.maxReplyChars),
-    readableLanguages: s.readableLanguages.join(', '),
     minQuality: String(s.minQuality),
   };
 }
@@ -56,7 +57,6 @@ export function fromForm(f: SettingsForm): Settings {
     }),
     bannedPhrases: lines(f.bannedPhrases),
     maxReplyChars: num(f.maxReplyChars),
-    readableLanguages: f.readableLanguages.split(',').map((l) => l.trim().toLowerCase()).filter(Boolean),
     ideaLanguage: f.ideaLanguage.trim().toLowerCase() || 'vi',
     minQuality: num(f.minQuality),
   });

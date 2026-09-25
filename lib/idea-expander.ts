@@ -1,13 +1,12 @@
 import { generateText, Output } from 'ai';
 import { assertSendable, getModel } from './ai-models';
 import { buildUserMessage } from './draft-prompt';
+import { languageName } from './languages';
 import { IdeaDraftSchema, type IdeaDraft, type Settings, type Tweet } from './types';
-
-const LANGUAGE_NAMES: Record<string, string> = { en: 'English', vi: 'Vietnamese' };
 
 // Only user-authored content here; the post goes in the JSON user message (same as drafts).
 export function buildIdeaInstructions(settings: Settings): string {
-  const lang = LANGUAGE_NAMES[settings.ideaLanguage] ?? settings.ideaLanguage;
+  const lang = languageName(settings.ideaLanguage);
   const who = settings.persona.trim() || `A software engineer interested in ${settings.interests.join(', ') || 'AI and software'}.`;
   const projects = settings.projects.map((p) => `- ${p.name}: ${p.description}`).join('\n');
   return `You turn an X post into a side-project idea for the user below. They save ideas to build later and then share the result on X to grow an audience.

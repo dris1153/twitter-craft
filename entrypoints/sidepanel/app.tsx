@@ -1,21 +1,20 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { DraftView } from '@/components/draft-view';
 import { IdeasView } from '@/components/ideas-view';
 import { SegmentedTabs } from '@/components/segmented-tabs';
 import { SettingsView } from '@/components/settings-view';
 import { useDraftSession } from '@/hooks/use-draft-session';
+import { useT } from '@/hooks/use-i18n';
 import { useIdeaCapture } from '@/hooks/use-idea-capture';
 import { usePendingAction } from '@/hooks/use-pending-action';
 
-const TABS = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'ideas', label: 'Ideas' },
-  { value: 'settings', label: 'Settings' },
-] as const;
-type Tab = (typeof TABS)[number]['value'];
+const TABS = ['draft', 'ideas', 'settings'] as const;
+type Tab = (typeof TABS)[number];
 
 export function App() {
+  const t = useT();
   const [tab, setTab] = useState<Tab>('draft');
+  const tabOptions = useMemo(() => TABS.map((v) => ({ value: v, label: t(`tab.${v}`) })), [t]);
   const drafts = useDraftSession();
   const ideas = useIdeaCapture();
 
@@ -36,7 +35,12 @@ export function App() {
           <span aria-hidden className="size-2.5 rounded-[1px] border-[1.5px] border-ink bg-sky" />
           twitter-craft
         </span>
-        <SegmentedTabs label="Sections" options={TABS} value={tab} onChange={setTab} />
+        <SegmentedTabs
+          label={t('tab.sections')}
+          options={tabOptions}
+          value={tab}
+          onChange={setTab}
+        />
       </header>
       {/* Draft and Ideas stay mounted so in-progress edits survive tab switches. Settings remounts to
           reload values changed elsewhere (e.g. voice samples) before the user can save over them. */}

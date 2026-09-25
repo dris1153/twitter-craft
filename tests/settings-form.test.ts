@@ -14,9 +14,8 @@ describe('settings form', () => {
 
   it('normalizes user input', () => {
     const form = toForm(SettingsSchema.parse({}));
-    const s = fromForm({ ...form, handle: '@me', readableLanguages: 'EN, vi ,', projects: 'solo | desc' });
+    const s = fromForm({ ...form, handle: '@me', projects: 'solo | desc' });
     expect(s.handle).toBe('me');
-    expect(s.readableLanguages).toEqual(['en', 'vi']);
     expect(s.projects).toEqual([{ name: 'solo', description: 'desc', url: '' }]);
   });
 

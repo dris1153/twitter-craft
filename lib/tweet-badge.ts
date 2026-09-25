@@ -1,3 +1,4 @@
+import { getLang, t as translate } from './i18n';
 import { isIdeaWorthy } from './triage-priority';
 import { findQuote } from './tweet-parser';
 import type { Triage, TriageError } from './types';
@@ -40,14 +41,6 @@ button:focus-visible { outline: 2px solid #6fc2ff; outline-offset: 2px; }
   button { transition: none !important; }
 }
 `;
-
-const ERROR_TEXT: Record<TriageError, string> = {
-  no_key: 'Jev key missing or invalid (open side panel settings)',
-  rate_limited: 'Jev rate limited, will retry',
-  http: 'Jev request failed, will retry',
-  invalid: 'Skipped',
-  dropped: 'Skipped while scrolling fast, will retry',
-};
 
 function host(article: Element, create: boolean): HTMLElement | null {
   const existing = article.querySelector<HTMLElement>(`[${BADGE_ATTR}]`);
@@ -93,26 +86,28 @@ function score(priority: number, tier: string, title: string, pop: boolean): HTM
   return pill;
 }
 
+const actions = (h: BadgeHandlers) => [button(translate('badge.draft'), h.onDraft), button(translate('badge.idea'), h.onIdea)];
+
 function content(state: BadgeState, handlers: BadgeHandlers, fresh: boolean): HTMLElement[] {
   if (state.kind === 'loading') {
-    const s = span('scoring', 'chip shimmer');
-    s.dataset.text = 'scoring';
+    const s = span(translate('badge.scoring'), 'chip shimmer');
+    s.dataset.text = s.textContent!;
     return [s];
   }
   if (state.kind === 'manual') {
-    const why = "On a post's page only the post and its author's thread are scored";
-    return [span('not scored', 'chip outline', why), button('Draft', handlers.onDraft), button('Idea', handlers.onIdea)];
+    const why = translate('badge.notScoredWhy');
+    return [span(translate('badge.notScored'), 'chip outline', why), ...actions(handlers)];
   }
-  if (state.kind === 'error') return [span('⚠', 'pill err', ERROR_TEXT[state.error])];
+  if (state.kind === 'error') return [span('⚠', 'pill err', translate(`badge.error.${state.error}`))];
   const { priority, triage: t } = state;
   const tier = priority >= 70 ? 'hi' : priority >= 40 ? 'mid' : 'lo';
-  const scores = `quality ${t.quality.toFixed(2)} · reply opening ${t.replyOpening.toFixed(2)} · build idea ${t.buildIdea.toFixed(2)}`;
-  const parts = [score(priority, tier, scores, fresh), span(t.action), span(t.topic)];
-  if (isIdeaWorthy(t)) parts.push(span('💡', '', `Worth saving as an idea (build idea ${t.buildIdea.toFixed(2)})`));
+  const scores = translate('badge.scores', { quality: t.quality.toFixed(2), reply: t.replyOpening.toFixed(2), build: t.buildIdea.toFixed(2) });
+  const parts = [score(priority, tier, scores, fresh), span(translate(`action.${t.action}`)), span(t.topic)];
+  if (isIdeaWorthy(t)) parts.push(span('💡', '', translate('badge.ideaWorthy', { build: t.buildIdea.toFixed(2) })));
   if (t.projectMatch !== 'none') parts.push(span(`↗ ${t.projectMatch}`));
-  if (t.uncertain) parts.push(span('?', '', 'Jev is not confident about this one'));
-  if (t.botInstructions > 0.5) parts.push(span('⚠ bait', '', 'Post contains instructions aimed at bots/AI'));
-  parts.push(button('Draft', handlers.onDraft), button('Idea', handlers.onIdea));
+  if (t.uncertain) parts.push(span('?', '', translate('badge.uncertain')));
+  if (t.botInstructions > 0.5) parts.push(span(`⚠ ${translate('badge.bait')}`, '', translate('badge.baitWhy')));
+  parts.push(...actions(handlers));
   return parts;
 }
 
@@ -123,8 +118,9 @@ export function renderBadge(article: Element, state: BadgeState, handlers: Badge
   style.textContent = STYLE;
   const row = document.createElement('div');
   row.className = 'row';
+  row.lang = getLang(); // X's page lang would make screen readers use the wrong voice
   row.append(...content(state, handlers, !root.querySelector('.pill:not(.err)')));
-  if (handlers.onCopyHtml) row.append(button('Copy HTML', handlers.onCopyHtml));
+  if (handlers.onCopyHtml) row.append(button(translate('badge.copyHtml'), handlers.onCopyHtml));
   root.replaceChildren(style, row);
 }
 

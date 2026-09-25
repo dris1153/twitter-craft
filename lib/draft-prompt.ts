@@ -1,7 +1,7 @@
 import type { ModelMessage } from 'ai';
+import { languageName } from './languages';
 import type { Settings, Triage, Tweet } from './types';
 
-const LANGUAGE_NAMES: Record<string, string> = { en: 'English', vi: 'Vietnamese', ja: 'Japanese', zh: 'Chinese' };
 
 // Reply in the author's language only if the user can review it; X auto-translate makes `lang` "vi", so never use it.
 export function replyLanguage(tweet: Pick<Tweet, 'originalLang'>, readable: string[]): string {
@@ -27,7 +27,7 @@ function projects(s: Settings): string {
 
 // Only user-authored, trusted content goes here. Anything from the post goes in the user message.
 export function buildInstructions(settings: Settings, language: string): string {
-  const lang = LANGUAGE_NAMES[language] ?? language;
+  const lang = languageName(language);
   const banned = settings.bannedPhrases.map((p) => `"${p}"`).join(', ');
   return `You draft replies to posts on X for the user described below. The user reviews and edits every draft before posting it.
 

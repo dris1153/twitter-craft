@@ -1,3 +1,5 @@
+import { setLang } from '@/lib/i18n';
+import { browserUiLanguage } from '@/lib/languages';
 import type { ContentMessage, TriageResponse } from '@/lib/messages';
 import { removeBadge, renderBadge, type BadgeHandlers } from '@/lib/tweet-badge';
 import { isTopLevelTweet, parseTweet, quickStatusId } from '@/lib/tweet-parser';
@@ -24,7 +26,13 @@ export default defineContentScript({
     document.querySelectorAll(`[${BADGE_ATTR}]`).forEach((el) => el.remove());
     document.querySelectorAll(SEL.tweet).forEach((a) => setDim(a, false));
 
-    let prefs: DisplayPrefs = { minQuality: 40, dimLowScore: true, debug: false };
+    let prefs: DisplayPrefs = { minQuality: 40, dimLowScore: true, debug: false, uiLanguage: browserUiLanguage() };
+    // Badges translate with the module-level language, so it follows prefs on every update.
+    const applyPrefs = (p: DisplayPrefs) => {
+      prefs = p;
+      setLang(p.uiLanguage);
+    };
+    setLang(prefs.uiLanguage);
     const entries = new WeakMap<Element, Entry>();
     const observed = new WeakSet<Element>();
     const send = <T>(msg: ContentMessage) => browser.runtime.sendMessage(msg) as Promise<T>;
@@ -43,9 +51,15 @@ export default defineContentScript({
       return true;
     });
 
+    // Badges wait for prefs so the first ones already use the chosen display language.
+    let prefsLoaded = false;
     void send<DisplayPrefs>({ type: 'get-prefs' })
-      .then((p) => (prefs = p))
-      .catch(() => {});
+      .then(applyPrefs)
+      .catch(() => {})
+      .finally(() => {
+        prefsLoaded = true;
+        scan();
+      });
 
     // The page under any modal. Opening the reply composer or the media viewer changes the URL, but
     // the page (and its badges) stays; only a real navigation should re-evaluate badges.
@@ -112,7 +126,7 @@ export default defineContentScript({
       }
       const cur = entries.get(article);
       if (cur?.id !== tweet.id || cur.route !== route) return; // node recycled or page changed while waiting
-      prefs = res.prefs;
+      applyPrefs(res.prefs);
       if (res.ok) {
         entries.set(article, { id: tweet.id, tweet, triage: res.triage, route });
         renderReady(article, tweet, res.triage);
@@ -130,6 +144,7 @@ export default defineContentScript({
     const gate = createVisibilityGate((el) => void evaluate(el));
 
     const scan = () => {
+      if (!prefsLoaded) return;
       const route = routeKey(currentPage());
       for (const article of document.querySelectorAll(SEL.tweet)) {
         if (!isTopLevelTweet(article)) continue;

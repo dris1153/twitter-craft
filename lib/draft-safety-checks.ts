@@ -2,13 +2,6 @@ import type { Card, Project, Triage, Tweet } from './types';
 
 export type DraftWarning = 'url' | 'handle' | 'bait' | 'too_long';
 
-export const WARNING_TEXT: Record<DraftWarning, string> = {
-  url: 'Contains a link that is not in the post or your projects',
-  handle: 'Mentions an @handle that is not in the post',
-  bait: 'The post looks like it tries to steer AI replies',
-  too_long: 'Longer than your max reply length',
-};
-
 const SCHEME_OR_WWW = /\b(?:https?:\/\/|www\.)[^\s<>"')\]]+/gi;
 const BARE_DOMAIN = /\b(?:[a-z0-9-]+\.)+([a-z]{2,24})\b(?:\/[^\s<>"')\]]*)?/gi;
 // "package.json", "Next.js" etc. look like domains but are file names.

@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { checkCard } from '@/lib/draft-safety-checks';
 import { draftErrorText, generateDraft } from '@/lib/draft-generator';
+import { t } from '@/lib/i18n';
 import type { PendingAction } from '@/lib/messages';
 import { expandInTab } from '@/lib/panel-to-tab';
 import { getSettings } from '@/lib/settings-store';
@@ -63,7 +64,7 @@ export function useDraftSession() {
         const expanded = await expandInTab(tabId, tweet.id);
         if (stale()) return;
         if (expanded?.id === tweet.id && !expanded.truncated) full = expanded;
-        else note = 'Could not expand the long post; drafted from the visible part.';
+        else note = t('draft.longPostNote');
       }
       const draft = await generateDraft(full, triage, me.ctrl.signal);
       if (stale()) return;

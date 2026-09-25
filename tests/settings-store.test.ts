@@ -10,6 +10,7 @@ describe('settings-store functions', () => {
         minQuality: 50,
         dimLowScore: false,
         debug: true,
+        uiLanguage: 'vi',
       });
 
       const prefs = toDisplayPrefs(settings);
@@ -18,6 +19,7 @@ describe('settings-store functions', () => {
         minQuality: 50,
         dimLowScore: false,
         debug: true,
+        uiLanguage: 'vi',
       });
     });
 
@@ -42,6 +44,7 @@ describe('settings-store functions', () => {
         minQuality: 40,
         dimLowScore: true,
         debug: false,
+        uiLanguage: settings.uiLanguage,
       });
     });
 
