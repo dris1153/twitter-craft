@@ -1,7 +1,7 @@
 # Development Roadmap
 
 **Project:** twitter-craft Chrome MV3 extension  
-**Status:** Phase 1 complete (live verified), Phase 2 complete (live verified), Phase 3 complete (live verified), Phase 4 in progress (code done, live test pending)  
+**Status:** Phase 1–4 complete (code done, live test pending), Language support (code done, uncommitted)  
 **Last updated:** 2026-09-25
 
 ## Overview
@@ -133,6 +133,28 @@ Personal extension for x.com: Jev triages visible tweets → badge with priority
 - Card images attach successfully
 - GIF suggestions are contextually relevant
 - Text posts even if image attach fails
+
+---
+
+### Language Support & UI Internationalization
+
+**Status:** Code complete (uncommitted)  
+**Effort:** 0.5d  
+
+**Completed deliverables:**
+- Language codes and metadata: LANGUAGES array (en, vi, ja, zh, ko, es, fr, de, pt, ru) with English names for prompts and native UI labels
+- Core i18n: module-level language state with setLang(), getLang(), t(key, vars) fallback chain (current → English → key)
+- Message dictionaries: en.ts (source of truth), vi.ts (type-checked against English keys)
+- UI language setting: uiLanguage (en|vi) defaults to browser language, saves instantly via setUiLanguage()
+- React integration: I18nProvider watches settings.uiLanguage, sets html lang attribute, provides useT() and useLang() hooks
+- Settings UI: new "Language" card with toggle chips for reviewed languages and select for idea notes language
+- Badge internationalization: DisplayPrefs includes uiLanguage, content script calls setLang() on prefs load
+- Tests: i18n-and-languages.test.ts validates language codes, fallback chain, browser language detection
+
+**Success criteria:**
+- ✅ 251 tests pass
+- Settings save instantly, language reflects in UI and badges
+- Message fallback works for missing keys or unexpected language codes
 
 ---
 

@@ -191,7 +191,7 @@ Manages concurrent API calls and rate limiting:
 | `session:triagePausedUntil` | session | — | Session | Epoch ms; if > now(), queue is paused |
 | `session:pendingAction` | session | — | Session | Nonce + tweet + triage + kind awaiting side panel open |
 
-**Content script cannot read `local:settings`** — background SW sanitizes and sends only `DisplayPrefs` (`minQuality`, `dimLowScore`, `debug`).
+**Content script cannot read `local:settings`** — background SW sanitizes and sends only `DisplayPrefs` (`minQuality`, `dimLowScore`, `debug`, `uiLanguage`).
 
 ## Tweet Parsing & Language Detection
 

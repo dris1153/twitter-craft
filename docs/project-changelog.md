@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+- Language support and UI internationalization (i18n):
+  - New `lib/languages.ts` exports LANGUAGES (10 codes: en, vi, ja, zh, ko, es, fr, de, pt, ru) with English names for prompts and native names for UI; `languageName()`, `UI_LANGUAGES` (en|vi), and `browserUiLanguage()`.
+  - New `lib/i18n/en.ts` and `lib/i18n/vi.ts` for message translation with module-level language state; `setLang()`, `getLang()`, and `t(key, vars)` for string replacement with fallback to English then key.
+  - New `hooks/use-i18n.tsx`: `I18nProvider` watches `settings.uiLanguage`, sets `document.documentElement.lang`, and exposes `useT()` and `useLang()` for components.
+  - New `components/language-chips.tsx`: toggle chips for "Languages you can review" with auto-save of checked codes.
+  - Settings now include "Language" card (top of form) with toggle chips for reviewed languages and select for idea notes language; `uiLanguage` (en|vi) defaults to browser language and saves instantly via `setUiLanguage()`.
+- DisplayPrefs now includes `uiLanguage` (4 fields: minQuality, dimLowScore, debug, uiLanguage); content script calls `setLang()` on prefs load for badge i18n.
+- Badge row gets `lang` attribute; existing badges only re-render on state changes.
+
 ### Changed
 - UI redesign (neo-brutalist theme per DESIGN.md): cream paper (#f4efea) background, charcoal ink (#383838) borders/text, sky (#6fc2ff) for primary actions, canary + rainbow palette for accents only. All elements use 2px radius and hard offset shadows (-2px/-4px/-6px) with no blur. Typography: JetBrains Mono for UI, Inter for third-party tweet text. Dark "charcoal paper" theme auto-applied via prefers-color-scheme. Assets: new `assets/ui-fonts.css` (18 @font-face rules for JetBrains Mono 400/500/600 + Inter 400/600/700 with latin/latin-ext/vietnamese unicode-range), `assets/motion.css` (motion tokens and transition classes with prefers-reduced-motion guards). New components: `panel-card.tsx` (accent stripe, Chip, SectionTitle), `segmented-tabs.tsx` (sliding pill), `tweet-embed.tsx`. Removed dark/light theme toggle from card PNG (`components/share-card.tsx`): card now renders single light DESIGN.md style. X badge redesign (`lib/tweet-badge.ts`): compact brutalist chip with colored score tiers (>=70 sky, 40-69 canary, else cream; errors coral). Idea rows now accordion; status select colored per status (new sky, reviewing marigold, doing mint, dropped slate). Settings save error triggers shake animation. Deleted `assets/card-fonts.css` (replaced by shared `assets/ui-fonts.css`).
 - Post pages (`/{handle}/status/{id}`): only the post and its author's own thread are scored. Other people's replies show a "not scored" badge with Draft/Idea and cost no Jev call (`lib/x-routes.ts` `triageMode`). Quote lists (`/status/{id}/quotes`) and all other feeds are scored as before.

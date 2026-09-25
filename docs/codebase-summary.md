@@ -29,6 +29,7 @@ One-line description per source file.
 | `components/ui/label.tsx` | — | shadcn/ui Label (generated) |
 | `components/ui/switch.tsx` | — | shadcn/ui Switch toggle (generated) |
 | `components/ui/textarea.tsx` | — | shadcn/ui Textarea (generated) |
+| `components/language-chips.tsx` | 29 | Toggle chips for "Languages you can review"; auto-saves checked language codes to settings |
 
 ## Libraries
 
@@ -38,13 +39,22 @@ One-line description per source file.
 |------|-------|---------|
 | `lib/types.ts` | 135+ | Zod schemas: Tweet, Triage, Settings, Draft (card + gifQuery), Card (flat object, all keys required), IdeaDraft, Idea; type exports; X_STATUS_URL validation |
 | `lib/messages.ts` | 46 | Content message schemas (triage, get-prefs, open-panel); PanelMessage (insert-draft with optional imageDataUrl, open-gif-picker); TriageResponse, PendingAction, InsertMode, InsertResult, GifResult types |
+| `lib/languages.ts` | 22 | LANGUAGES array (10 codes: en, vi, ja, zh, ko, es, fr, de, pt, ru) with English names and native UI labels; languageName(), UI_LANGUAGES, browserUiLanguage() |
 
 ### Storage & Draft Session
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `lib/settings-store.ts` | 34 | Load/save `local:settings`; handle corrupted fields gracefully; compute settings hash for cache key |
+| `lib/settings-store.ts` | 34 | Load/save `local:settings`; handle corrupted fields gracefully; compute settings hash for cache key; setUiLanguage() merges into stored settings |
 | `lib/pending-action-store.ts` | 7 | `session:pendingAction` item (nonce + tweet + triage awaiting side panel) |
+
+### Internationalization (i18n)
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `lib/i18n/en.ts` | 20+ | English message dictionary; source of truth for all keys; used for fallback and prompt strings |
+| `lib/i18n/vi.ts` | 20+ | Vietnamese message dictionary; type-checked against English keys |
+| `lib/i18n/index.ts` | 24 | Module-level language state with setLang(), getLang(), t(key, vars); fallback chain: current language → English → key |
 
 ### Triage Logic
 
@@ -104,6 +114,7 @@ One-line description per source file.
 | `hooks/use-pending-action.ts` | — | Poll session:pendingAction; extract tweet + triage context; nonce check for staleness |
 | `hooks/use-draft-session.ts` | — | Manage draft state: variants, edits, insertion status; queue new tweets while editing |
 | `hooks/use-idea-capture.ts` | — | Expand idea via lib/idea-expander.ts; dedupe by statusId; manage idea form state |
+| `hooks/use-i18n.tsx` | 32 | I18nProvider watches settings.uiLanguage, sets html lang attribute; useT() returns t() function (memoized per language); useLang() returns current language |
 
 ### Utilities
 
@@ -134,6 +145,7 @@ One-line description per source file.
 | `tests/visibility-and-routes.test.ts` | Visibility gate logic and X route allowlist |
 | `tests/idea-capture.test.ts` | Idea expansion, deduping, form state management |
 | `tests/ideas-export-and-store.test.ts` | Ideas store mutations, Markdown export (grouped by status, safe links) |
+| `tests/i18n-and-languages.test.ts` | Language code validation, LANGUAGES array, browserUiLanguage(), i18n translation with fallback chain |
 
 ## Configuration
 
