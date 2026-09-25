@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Ideas/TODO + Markdown export"
-status: in-progress
+status: done
 priority: P2
 effort: "0.5d"
 dependencies: [2]
@@ -88,10 +88,10 @@ Modify:
 
 ## Success Criteria
 
-- [ ] Idea from badge → expanded draft in ≤ ~10s → saved → survives browser restart.
-- [ ] Status change and notes persist.
-- [ ] Exported file opens cleanly in a Markdown viewer; checkbox lists render.
-- [ ] Saving same tweet twice does not create duplicates.
+- [x] Idea from badge → expanded draft in ≤ ~10s → saved → survives browser restart.
+- [x] Status change and notes persist.
+- [x] Exported file opens cleanly in a Markdown viewer; checkbox lists render.
+- [x] Saving same tweet twice does not create duplicates.
 
 ## Risk Assessment
 

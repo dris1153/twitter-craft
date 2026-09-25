@@ -1,7 +1,7 @@
 # Development Roadmap
 
 **Project:** twitter-craft Chrome MV3 extension  
-**Status:** Phase 1 complete (live verified), Phase 2 complete (live verified), Phase 3 in progress (code done, live test pending)  
+**Status:** Phase 1 complete (live verified), Phase 2 complete (live verified), Phase 3 complete (live verified), Phase 4 in progress (code done, live test pending)  
 **Last updated:** 2026-09-25
 
 ## Overview
@@ -85,10 +85,10 @@ Personal extension for x.com: Jev triages visible tweets → badge with priority
 
 ### Phase 3: Ideas/TODO + Markdown Export
 
-**Status:** In Progress (code done, live test pending)  
+**Status:** Complete (live verified)  
 **Effort:** 0.5d  
 **Start:** 2026-09-25  
-**Target completion:** 2026-09-26
+**Completion:** 2026-09-25
 
 **Completed deliverables:**
 - Badge kind: 'idea' for idea-worthy posts (buildIdea ≥ 0.6)
@@ -108,25 +108,32 @@ Personal extension for x.com: Jev triages visible tweets → badge with priority
 
 ### Phase 4: Card PNG + GIF Suggestion
 
-**Status:** Pending  
-**Effort:** 1d estimated  
-**Target start:** After phase 3  
-**Target completion:** TBD
+**Status:** In Progress (code done, live test pending)  
+**Effort:** 1d  
+**Start:** 2026-09-25  
+**Target completion:** 2026-09-26
 
-**Planned deliverables:**
-- Card generation: text → PNG using HTML Canvas or Remotion
-- Card preview in draft panel
-- Insert card as image tweet (or link)
-- GIF suggestion: AI recommends reaction GIF (phase 4.5)
+**Completed deliverables:**
+- Card schema: flat object (kind/title/bullets/code/columns/rows), all keys required for OpenAI strict mode
+- Three card kinds: insight (bullets), code (code block), compare (2-column table)
+- Draft generation: normalizeCard() trims/limits, retry once without card on NoObjectGeneratedError
+- Card UI: side panel toggle, dark/light theme, inline editor, Copy image button
+- PNG export: html-to-image with woff2 font embed cached per kind, 5s timeout, 3MB cap
+- Card fonts: bundled Inter 400/700 + JetBrains Mono (latin+latin-ext+vietnamese unicode-range)
+- Card attachment: cardImageFor() logic, auto-untick on failure, wait-for-render logic
+- GIF picker: openGifPicker() calls X's native picker, types query, mutual exclusivity with images
+- Validation: checkCard() checks for unknown links/handles (same safety checks as text)
+- Insert flow: pasteImage() attaches PNG, returns image_failed if X doesn't accept it
 
-**Blockers:**
-- Card schema validation (OpenAI strict response mode)
-- Image hosting or data URL optimization
+**Blockers (for live spike):**
+- Card + GIF sequencing (if both suggested, which posts first)
+- Theme preference persistence
 
 **Success criteria:**
-- Card preview renders before insert
-- Card tweets post successfully
-- GIF suggestions are relevant (if included)
+- Card preview renders and matches actual PNG posted to X
+- Card images attach successfully
+- GIF suggestions are contextually relevant
+- Text posts even if image attach fails
 
 ---
 
@@ -214,8 +221,8 @@ Personal extension for x.com: Jev triages visible tweets → badge with priority
 |-------|--------|-------|----------|--------|
 | 1 | Complete | 2026-09-25 | 2026-09-26 | 2026-09-25 |
 | 2 | Complete | 2026-09-25 | 2026-09-26 | 2026-09-25 |
-| 3 | In progress | 2026-09-25 | 2026-09-26 | — |
-| 4 | Pending | — | — | — |
+| 3 | Complete | 2026-09-25 | 2026-09-26 | 2026-09-25 |
+| 4 | In progress | 2026-09-25 | 2026-09-26 | — |
 
 **Estimate:** Sequential phases; ~6 days total effort (2.5 + 2 + 0.5 + 1). Phase 1 completed ahead of schedule.
 

@@ -36,7 +36,7 @@ Content Script
   └─ On badge click: Send { type: 'open-panel', kind, tweet, triage }
 ```
 
-### Draft Path (Phase 2)
+### Draft Path (Phase 2–4)
 
 ```
 Background SW
@@ -81,6 +81,36 @@ Draft Safety (Phase 2)
   │   ├─ Detect bait patterns (common engagement tricks)
   │   ├─ Check text length against maxReplyChars
   │   └─ If risky: confirm before insert
+
+**Card & GIF (Phase 4)**
+  ├─ Draft generation (lib/draft-generator.ts):
+  │   ├─ DraftSchema: card (flat CardSchema) + gifQuery (≤3 words), both nullable
+  │   ├─ On NoObjectGeneratedError: retry without card field (text never blocked)
+  │   ├─ normalizeCard(): trim, limit bullets/code/rows, drop if empty
+  │   └─ No card/GIF when draft is skipped
+  ├─ Card UI (side panel):
+  │   ├─ CardPanel: attach toggle (starts unchecked), dark/light theme, edit button
+  │   ├─ Preview = actual PNG (off-screen ShareCard, pixelRatio 2 → 1200px)
+  │   ├─ CardEditor: inline title/bullets/code/rows with live validation
+  │   ├─ Copy image: separate gesture, clipboard item (image/png)
+  │   └─ Warnings shown if card has unknown links/handles
+  ├─ Card rendering (lib/card-to-png.ts):
+  │   ├─ html-to-image: toBlob + getFontEmbedCSS
+  │   ├─ woff2 font embed cached per kind (assets/card-fonts.css)
+  │   ├─ 5s timeout, 3MB size cap
+  │   └─ CardRenderState: pending/ready/failed
+  ├─ Card attachment (lib/card-attach.ts):
+  │   ├─ cardImageFor(): returns image + wait flag
+  │   ├─ Image only from exact current card render (stale images discarded)
+  │   ├─ Auto-untick attach if render fails (never blocked, text posts)
+  │   └─ Wait for render if pending, resume insert when ready
+  ├─ Content script (lib/x-composer-media.ts):
+  │   ├─ pasteImage(): decode data URL → File, paste via ClipboardEvent, waitFor() media preview
+  │   ├─ openGifPicker(): X's native GIF picker, type query, return status
+  │   ├─ Card and GIF mutually exclusive (X allows one image or one GIF)
+  │   └─ Insert returns image_failed if X doesn't accept the PNG
+  └─ Safety (lib/draft-safety-checks.ts):
+     └─ checkCard(): same unknown-link/handle checks as text (url + handle warnings only)
 
 ### Ideas Path (Phase 3)
 

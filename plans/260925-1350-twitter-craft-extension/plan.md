@@ -26,8 +26,8 @@ Research: [WXT + AI SDK in MV3](./research/researcher-01-wxt-ai-sdk-mv3-report.m
 |-------|------|--------|--------|
 | 1 | [Scaffold, settings, parser, Jev triage badges](./phase-01-scaffold-settings-parser-jev-triage.md) | Done (live verified) | 2.5d |
 | 2 | [GPT draft + composer insert](./phase-02-gpt-draft-and-composer-insert.md) | Done (live verified) | 2d |
-| 3 | [Ideas/TODO + Markdown export](./phase-03-ideas-todo-and-markdown-export.md) | In progress (code done, live test pending) | 0.5d |
-| 4 | [Card PNG + GIF suggestion](./phase-04-card-png-and-gif-suggestion.md) | Pending | 1d |
+| 3 | [Ideas/TODO + Markdown export](./phase-03-ideas-todo-and-markdown-export.md) | Done (live verified) | 0.5d |
+| 4 | [Card PNG + GIF suggestion](./phase-04-card-png-and-gif-suggestion.md) | In progress (code done, live test pending) | 1d |
 
 Sequential: each phase depends on the previous one.
 

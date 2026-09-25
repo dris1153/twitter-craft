@@ -1,5 +1,62 @@
 # Project Changelog
 
+## 0.4.0 (2026-09-25)
+
+**Phase 4: Card PNG + GIF Suggestion — In Progress (Code Complete, Live Test Pending)**
+
+### Completed
+
+**Card Generation & Rendering**
+- DraftSchema extended: `card` (CardSchema, flat object with kind/title/bullets/code/columns/rows, all keys required for OpenAI strict mode) and `gifQuery` (≤3 words, ≤60 chars, null if draft skipped)
+- Three card kinds: insight (bullets), code (code block + lang), compare (2-column table with labeled rows)
+- Draft generation (lib/draft-generator.ts):
+  - `normalizeCard()` trims, limits bullets/code/rows, drops empty cards
+  - Retry once without card field on NoObjectGeneratedError (malformed card never blocks text replies)
+  - No card/GIF when draft is skipped
+- Card schema validation in lib/draft-safety-checks.ts: checkCard() checks for unknown links/handles (same as text drafts)
+
+**Card UI & PNG Export**
+- Side panel: CardPanel component (attach toggle, light/dark theme, edit card, Copy image button)
+- Preview is the actual rendered PNG (off-screen components/share-card.tsx, pixelRatio 2 → 1200px)
+- PNG generation (lib/card-to-png.ts):
+  - html-to-image library (toBlob + getFontEmbedCSS)
+  - woff2 font embed cached per card kind
+  - 5s timeout, 3MB size cap
+- Card editor (components/card-editor.tsx): inline edit title, bullets/code/rows with live preview
+- Share card (components/share-card.tsx): dark/light theme, Inter + JetBrains Mono fonts, 600px wide
+
+**Font Bundling**
+- assets/card-fonts.css: bundled Inter 400/700 and JetBrains Mono (latin+latin-ext+vietnamese subsets)
+- unicode-range per subset (no remote fonts; extension pages block them, html-to-image can't embed them)
+- Fonts from @fontsource package (woff2 only, keeps embed CSS small)
+
+**Card Attachment Logic**
+- lib/card-attach.ts: CardRenderState (pending/ready/failed), cardImageFor() returns image + wait flag
+- Image only from exact current card render (stale images discarded)
+- Auto-untick attach if render fails (never blocked after failure, text still posts)
+- Wait for render if pending, resume insert when ready
+
+**Content Script: Media & GIF**
+- lib/x-composer-media.ts:
+  - pasteImage(): decode data URL to File, paste via ClipboardEvent, waitFor() new media preview
+  - openGifPicker(): open X's native GIF picker, type query, return gif_opened/gif_disabled/no_dialog
+  - `image_failed` result: text inserted but image/GIF not accepted by X
+- lib/wait-for.ts: shared waitFor() + sleep utilities
+- Card and GIF mutually exclusive (X allows one image or one GIF per post)
+- PanelMessage: insert-draft now carries optional PNG data URL (validated)
+
+**Safety & Validation**
+- Card attachment starts unchecked; attach-toggle shows warnings (url, handle)
+- cardImageFor() ensures Insert has a valid image or doesn't wait
+
+### Known Issues / Open Items
+
+**Phase 4 Live Spike**
+- [ ] Card theme preferences on live x.com (dark/light UX pattern)
+- [ ] Card + GIF order (which posts first if both suggested)
+
+---
+
 ## 0.3.0 (2026-09-25)
 
 **Phase 3: Ideas/TODO + Markdown Export — In Progress (Code Complete, Live Test Pending)**

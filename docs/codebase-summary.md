@@ -18,6 +18,9 @@ One-line description per source file.
 | `components/settings-view.tsx` | 112 | Settings form UI: API keys, triage prefs, voice config; loads/saves to storage |
 | `components/draft-view.tsx` | 110+ | Draft tab UI: display generated drafts, edit variants, insert into composer, save voice samples |
 | `components/draft-variant-editor.tsx` | — | Reusable draft variant editor (reply/quote variant with insert + copy buttons) |
+| `components/card-panel.tsx` | 90 | Card UI: attach toggle, dark/light theme, edit, Copy image; preview is actual PNG from off-screen ShareCard |
+| `components/card-editor.tsx` | 62 | Inline card editor: title, bullets/code/rows with kind-specific hints, live preview |
+| `components/share-card.tsx` | 67 | Off-screen card render: dark/light theme, Inter + JetBrains Mono, 600px fixed width |
 | `components/ideas-view.tsx` | — | Ideas tab UI: list, inline edit, filter by status, delete confirm, export .md |
 | `components/idea-editor.tsx` | — | Single idea inline editor with blur-autosave |
 | `components/idea-row.tsx` | — | Idea list row: status select, delete button, open post link |
@@ -33,8 +36,8 @@ One-line description per source file.
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `lib/types.ts` | 120+ | Zod schemas: Tweet, Triage, Settings, Draft, IdeaDraft, Idea; type exports; X_STATUS_URL validation |
-| `lib/messages.ts` | 37 | Content message schemas (triage, get-prefs, open-panel with kind); TriageResponse, PendingAction, InsertMode types |
+| `lib/types.ts` | 135+ | Zod schemas: Tweet, Triage, Settings, Draft (card + gifQuery), Card (flat object, all keys required), IdeaDraft, Idea; type exports; X_STATUS_URL validation |
+| `lib/messages.ts` | 46 | Content message schemas (triage, get-prefs, open-panel); PanelMessage (insert-draft with optional imageDataUrl, open-gif-picker); TriageResponse, PendingAction, InsertMode, InsertResult, GifResult types |
 
 ### Storage & Draft Session
 
@@ -55,12 +58,21 @@ One-line description per source file.
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `lib/draft-generator.ts` | 47 | Generate drafts via OpenAI: AI SDK 7 generateText + Output.object + DraftSchema; 30s timeout, store:false, maxRetries:0 |
+| `lib/draft-generator.ts` | 72 | Generate drafts via OpenAI: AI SDK 7 + DraftSchema; normalizeCard + retry without card on NoObjectGeneratedError; no card/GIF when skipped |
 | `lib/draft-prompt.ts` | 100+ | Build draft prompt: instructions (trusted context only) + user message (JSON + images); replyLanguage logic |
-| `lib/draft-safety-checks.ts` | 60+ | Check for unknown links/handles, bait patterns, text length before insert; confirm if risky |
+| `lib/draft-safety-checks.ts` | 76 | Check for unknown links/handles, bait patterns, text length before insert; checkCard() for card content validation |
 | `lib/x-composer.ts` | 180+ | Insert draft into x.com composer: dialog scope, target verification, focus check, execCommand + paste fallback, post-button check |
 | `lib/panel-to-tab.ts` | 40+ | Send insert message from side panel to content script; handle result codes; clipboard fallback logic |
 | `lib/ai-models.ts` | 20+ | Resolve draft model (gpt-5.6-terra or settings override); check API key presence; shared assertSendable for draft/idea safety |
+
+### Card & GIF (Phase 4)
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `lib/card-to-png.ts` | 27 | Render card PNG via html-to-image: toBlob + woff2 font embed cached per kind, 5s timeout, 3MB cap |
+| `lib/card-attach.ts` | 20 | CardRenderState type; cardImageFor(): returns image + wait flag, never returns stale images, auto-untick on failure |
+| `lib/x-composer-media.ts` | 56 | pasteImage(): decode data URL → File, paste via ClipboardEvent; openGifPicker(): X's native GIF picker, mutual exclusivity |
+| `lib/wait-for.ts` | 12 | Shared waitFor() polling + sleep utilities (used by media insertion) |
 
 ### Ideas & Markdown Export (Phase 3)
 
@@ -146,6 +158,7 @@ One-line description per source file.
 |------|---------|
 | `public/icon*.png` | Extension icons (16, 48, 128) |
 | `public/twitter-craft.html` | Side panel HTML template (WXT generates from React) |
+| `assets/card-fonts.css` | Bundled card fonts: Inter 400/700 + JetBrains Mono (latin+latin-ext+vietnamese unicode-range) for PNG embedding |
 
 ## Build Output
 
@@ -168,12 +181,15 @@ One-line description per source file.
 - **AI SDK 7** — LLM client library
   - `@ai-sdk/typesafe-ai` — TypeSafe AI (Jev) provider
   - `@ai-sdk/openai` — OpenAI provider (phase 2)
+- **html-to-image** — Card PNG rendering (toBlob + font embedding)
+  - `@fontsource/inter` — Inter font subsets (latin, latin-ext, vietnamese; 400/700 weights)
+  - `@fontsource/jetbrains-mono` — JetBrains Mono font subsets (phase 4 code cards)
 - **Vitest 5** — Unit test framework
 - **happy-dom 20** — Minimal DOM implementation for tests
 
 ## Size & Metrics
 
-- **Total source lines:** ~1,065 (entrypoints, components, lib)
+- **Total source lines:** ~1,300 (entrypoints, components, lib; phase 4 +235 LOC)
 - **Test lines:** ~1,200 (14 test files, 122 test cases)
 - **Type coverage:** Strict TypeScript, all public functions have explicit return types
-- **Bundle size:** ~400 KB (extension) before gzip (WXT minifies)
+- **Bundle size:** ~420 KB (extension) before gzip (html-to-image + fonts +20 KB)

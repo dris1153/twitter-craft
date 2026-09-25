@@ -1,6 +1,6 @@
 # twitter-craft
 
-Personal Chrome MV3 extension for x.com. Triages visible tweets using Jev (TypeSafe System One model), shows badge with priority/action, and side panel (React + Tailwind v4 + shadcn/ui) for settings and drafting. GPT drafts replies/quotes with localized tone (reaction/question/take angles). Captures ideas → export Markdown. No backend; keys local only.
+Personal Chrome MV3 extension for x.com. Triages visible tweets using Jev (TypeSafe System One model), shows badge with priority/action, and side panel (React + Tailwind v4 + shadcn/ui) for settings, drafting, and ideas. GPT drafts replies/quotes with localized tone (reaction/question/take angles). Generates cards as PNG images (insight/code/compare kinds) with dark/light themes. GIF suggestions via X's picker. Captures ideas → export Markdown. No backend; keys local only.
 
 ## Setup
 
@@ -62,9 +62,9 @@ pnpm test              # Run test suite
 
 ## Architecture
 
-- **Content script** (`entrypoints/x-timeline.content/`): Parses visible tweets, monitors for changes, renders badges
+- **Content script** (`entrypoints/x-timeline.content/`): Parses visible tweets, monitors for changes, renders badges, handles media/GIF insertion
 - **Background service worker** (`entrypoints/background.ts`): Validates messages, calls Jev, manages triage queue, opens side panel
-- **Side panel** (`entrypoints/sidepanel/`): Settings, Draft tab (GPT-generated replies/quotes), compose insert
+- **Side panel** (`entrypoints/sidepanel/`): Settings, Draft tab (GPT-generated replies/quotes with optional card + GIF), Ideas tab, compose insert
 - **Storage:**
   - `local:settings` — API keys, interests, projects, voice samples, banned phrases (TRUSTED_CONTEXTS only)
   - `local:ideas` — Persisted ideas (title, problem, insight, mvpScope, stack, promo, tags, status)
@@ -97,7 +97,11 @@ Tests use `vitest` + `happy-dom`. Fixtures in `tests/fixtures/` are hand-written
 **"Copy HTML" button missing:** Enable Debug in settings
 **Triage errors "rate_limited":** Wait 30s, extension auto-retries. Queue pauses at 429/529 response.
 **Draft fails or times out:** Check OpenAI API key in Settings. Draft generation timeout: 30s. Model must be in API account.
+**Card renders but doesn't attach:** Attach toggle must be checked. If render fails, toggle auto-unticks (text still posts). Try again.
+**Card image shows "Could not render":** Timeout 5s or image > 3MB. Simplify card content or try different theme.
+**GIF picker not opening:** Only works when card is not attached (X allows one image/GIF per post). Uncheck "Attach card" first.
 **Insert fails (says "dialog_open"):** Close any open reply/quote dialog on x.com; try Insert again.
 **Text not inserting into composer:** Multi-line text: extension uses paste if execCommand fails. Ensure clipboard is available.
+**Image_failed result:** Text inserted but X didn't accept the card image. Try Insert again; card may be too large or format unsupported.
 **Voice sample not saving:** Click "Save as voice sample" only after editing a draft (shows after successful insert).
 **Translated posts show wrong language:** Check Settings; readable languages are en, vi. Non-readable posts translate to English.

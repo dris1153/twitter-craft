@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Card PNG + GIF suggestion"
-status: pending
+status: in-progress
 priority: P3
 effort: "1d"
 dependencies: [2]
@@ -28,6 +28,13 @@ Drafts can include a card image (insight / code / compare) rendered from React t
 - Blob can't cross `tabs.sendMessage` → send data URL, rebuild `File` in content script.
 - No Giphy/Tenor key: open X's GIF picker, type query with `execCommand('insertText')` into its search input. Selector unverified (`gifSearchButton` vs `gifButton`) → verify live, keep in `x-dom-selectors.ts`.
 - Card is optional: model returns `card: null` when a card adds nothing. Most replies should be text only.
+
+## Implementation Notes
+
+- **Flat schema instead of union**: `CardSpecSchema` uses a single flat object with all keys required (e.g., `kind, title, bullets` for insight; `kind, title, lang, code` for code) instead of discriminated union. This avoids OpenAI strict mode tuple rejection.
+- **Preview shows the real PNG**: Draft preview renders and caches the actual PNG blob via `html-to-image`, which will be pasted into the composer — no separate preview engine.
+- **Hand-written @font-face**: Bundled fonts (Inter, JetBrains Mono) embedded in `assets/card-fonts.css` with woff2 only and explicit `unicode-range` subsets for Latin, Latin-ext, and Vietnamese.
+- **Card and GIF mutually exclusive**: Prompt and UI enforce one or the other; GIF button hidden while card is attached; model gets `gif_disabled` when button is unavailable.
 
 ## Requirements
 
@@ -84,12 +91,12 @@ Modify:
 
 ## Todo List
 
-- [ ] CardSpec schema + prompt rules
-- [ ] 3 card templates + fonts
-- [ ] card-to-png
-- [ ] pasteImage + fallback
-- [ ] GIF picker prefill
-- [ ] Manual tests + compile + tests
+- [x] CardSpec schema + prompt rules
+- [x] 3 card templates + fonts
+- [x] card-to-png
+- [x] pasteImage + fallback
+- [x] GIF picker prefill
+- [ ] Manual tests
 
 ## Success Criteria
 
