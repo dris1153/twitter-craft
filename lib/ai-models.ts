@@ -1,6 +1,6 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { getSettings } from './settings-store';
-import type { Settings } from './types';
+import type { Settings, Tweet } from './types';
 
 export class MissingKeyError extends Error {
   constructor() {
@@ -14,4 +14,13 @@ export async function getModel(kind: 'draft' | 'idea') {
   if (!settings.openaiKey) throw new MissingKeyError();
   const openai = createOpenAI({ apiKey: settings.openaiKey });
   return { model: openai(kind === 'draft' ? settings.draftModel : settings.ideaModel), settings };
+}
+
+export class NotAllowedError extends Error {}
+
+// Same rule as triage: private and promoted posts never leave the browser.
+export function assertSendable(tweet: Tweet): void {
+  if (tweet.isProtected || tweet.quoted?.isProtected || tweet.isAd) {
+    throw new NotAllowedError('Protected or promoted posts are never sent to AI.');
+  }
 }

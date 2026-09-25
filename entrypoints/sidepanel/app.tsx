@@ -1,32 +1,35 @@
 import { useState } from 'react';
 import { DraftView } from '@/components/draft-view';
+import { IdeasView } from '@/components/ideas-view';
 import { SettingsView } from '@/components/settings-view';
 import { useDraftSession } from '@/hooks/use-draft-session';
+import { useIdeaCapture } from '@/hooks/use-idea-capture';
 import { usePendingAction } from '@/hooks/use-pending-action';
 import { cn } from '@/lib/utils';
 
-type Tab = 'draft' | 'settings';
+const TABS = ['draft', 'ideas', 'settings'] as const;
+type Tab = (typeof TABS)[number];
 
 export function App() {
   const [tab, setTab] = useState<Tab>('draft');
-  const [notice, setNotice] = useState('');
   const drafts = useDraftSession();
+  const ideas = useIdeaCapture();
 
   usePendingAction((action) => {
-    setTab('draft');
     if (action.kind === 'idea') {
-      setNotice('Saving ideas to the TODO list arrives in the next update.');
-      return;
+      setTab('ideas');
+      void ideas.receive(action);
+    } else {
+      setTab('draft');
+      drafts.receive(action);
     }
-    setNotice('');
-    drafts.receive(action);
   });
 
   return (
     <main className="min-h-screen text-sm">
       <header className="flex items-center gap-1 border-b px-3 py-2">
         <span className="mr-auto font-semibold">twitter-craft</span>
-        {(['draft', 'settings'] as const).map((t) => (
+        {TABS.map((t) => (
           <button
             key={t}
             type="button"
@@ -37,8 +40,11 @@ export function App() {
           </button>
         ))}
       </header>
-      {notice && <p className="border-b px-4 py-2 text-xs text-muted-foreground">{notice}</p>}
-      {tab === 'draft' ? <DraftView {...drafts} /> : <SettingsView />}
+      {/* Draft and Ideas stay mounted so in-progress edits survive tab switches. Settings remounts to
+          reload values changed elsewhere (e.g. voice samples) before the user can save over them. */}
+      <div hidden={tab !== 'draft'}><DraftView {...drafts} /></div>
+      <div hidden={tab !== 'ideas'}><IdeasView {...ideas} /></div>
+      {tab === 'settings' && <SettingsView />}
     </main>
   );
 }

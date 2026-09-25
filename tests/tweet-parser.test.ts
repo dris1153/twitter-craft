@@ -114,3 +114,14 @@ describe('helpers', () => {
     expect(parseTweet(document.querySelector('article')!)).toBeNull();
   });
 });
+
+describe('video posters', () => {
+  it('uses the main video poster as media, but not the quoted post video', () => {
+    document.body.innerHTML = readFileSync(join(import.meta.dirname, 'fixtures', 'translated-quote.html'), 'utf8');
+    const article = document.querySelector('article')!;
+    expect(parseTweet(article)!.mediaUrls).toEqual([]); // the only video lives in the quote
+    const group = article.querySelector('[role="group"]')!;
+    group.insertAdjacentHTML('beforebegin', '<div data-testid="videoPlayer"><video poster="https://pbs.twimg.com/amplify_video_thumb/1/img/main.jpg"></video></div>');
+    expect(parseTweet(article)!.mediaUrls).toEqual(['https://pbs.twimg.com/amplify_video_thumb/1/img/main.jpg']);
+  });
+});

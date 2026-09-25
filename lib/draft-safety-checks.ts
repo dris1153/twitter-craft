@@ -15,14 +15,32 @@ const BARE_DOMAIN = /\b(?:[a-z0-9-]+\.)+([a-z]{2,24})\b(?:\/[^\s<>"')\]]*)?/gi;
 const FILE_EXTENSIONS = new Set(['js', 'ts', 'jsx', 'tsx', 'py', 'md', 'rs', 'go', 'rb', 'json', 'txt', 'yml', 'yaml', 'toml', 'lock', 'css', 'html', 'env', 'sql']);
 const HANDLE = /@([A-Za-z0-9_]{1,15})(?![A-Za-z0-9_])/g;
 
-function hostOf(url: string): string {
+export function hostOf(url: string): string {
   return url.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split(/[/?#]/)[0]!.replace(/[.,;:!?]+$/, '').toLowerCase();
 }
 
+const LINK = new RegExp(`${SCHEME_OR_WWW.source}|${BARE_DOMAIN.source}`, 'gi');
+
+// Link-like substrings in order (scheme/www links, or bare domains that are not file names).
+export function linksIn(text: string): { url: string; index: number }[] {
+  return [...text.matchAll(LINK)]
+    .filter((m) => m[1] === undefined || !FILE_EXTENSIONS.has(m[1].toLowerCase()))
+    .map((m) => ({ url: m[0], index: m.index! }));
+}
+
 export function hostsIn(text: string): string[] {
-  const withScheme = [...text.matchAll(SCHEME_OR_WWW)].map((m) => m[0]);
-  const bare = [...text.matchAll(BARE_DOMAIN)].filter((m) => !FILE_EXTENSIONS.has(m[1]!.toLowerCase())).map((m) => m[0]);
-  return [...withScheme, ...bare].map(hostOf).filter(Boolean);
+  return linksIn(text).map((l) => hostOf(l.url)).filter(Boolean);
+}
+
+const normalizeUrl = (u: string) => u.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').toLowerCase();
+
+// By URL prefix, not host: a project at github.com/me/proj must not vouch for github.com/evil/malware.
+export function isProjectUrl(url: string, projectUrls: string[]): boolean {
+  const u = normalizeUrl(url);
+  return projectUrls
+    .map((p) => normalizeUrl(p).replace(/\/+$/, ''))
+    .filter(Boolean)
+    .some((base) => u === base || u.startsWith(`${base}/`) || u.startsWith(`${base}?`) || u.startsWith(`${base}#`));
 }
 
 // Model output may carry links or mentions planted by the post (prompt injection); flag them for a human look.
@@ -32,8 +50,11 @@ export function checkDraft(
 ): DraftWarning[] {
   const warnings: DraftWarning[] = [];
   const source = `${ctx.tweet.text} ${ctx.tweet.quoted?.text ?? ''}`;
-  const allowedHosts = new Set([...hostsIn(source), ...ctx.projects.flatMap((p) => hostsIn(p.url))]);
-  if (hostsIn(text).some((h) => !allowedHosts.has(h))) warnings.push('url');
+  const sourceHosts = new Set(hostsIn(source));
+  const projectUrls = ctx.projects.map((p) => p.url);
+  if (linksIn(text).some((l) => !sourceHosts.has(hostOf(l.url)) && !isProjectUrl(l.url, projectUrls))) {
+    warnings.push('url');
+  }
 
   const allowedHandles = new Set(
     [ctx.tweet.authorHandle, ctx.tweet.quoted?.authorHandle ?? '', ...[...source.matchAll(HANDLE)].map((m) => m[1]!)]

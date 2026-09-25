@@ -68,6 +68,7 @@ export const SettingsSchema = z.object({
     .default(['Great insight', 'Game changer', 'This is huge', 'Couldn\'t agree more', 'Love this']),
   maxReplyChars: z.number().int().min(50).max(25_000).default(280),
   readableLanguages: z.array(z.string()).default(['en', 'vi']),
+  ideaLanguage: z.string().default('vi'),
   minQuality: z.number().min(0).max(100).default(40),
   dimLowScore: z.boolean().default(true),
   debug: z.boolean().default(false),
@@ -77,8 +78,8 @@ export type Settings = z.infer<typeof SettingsSchema>;
 export const DisplayPrefsSchema = SettingsSchema.pick({ minQuality: true, dimLowScore: true, debug: true });
 export type DisplayPrefs = z.infer<typeof DisplayPrefsSchema>;
 
-// "practical" instead of "experience": the model must not invent past events the user never had.
-export const REPLY_ANGLES = ['insight', 'question', 'practical'] as const;
+// Casual angles on purpose: "insight"/"practical" pushed the model into lecturing (user feedback).
+export const REPLY_ANGLES = ['reaction', 'question', 'take'] as const;
 
 // OpenAI strict structured outputs: nullable (not optional), no tuples.
 export const DraftSchema = z.object({
@@ -87,3 +88,30 @@ export const DraftSchema = z.object({
   quote: z.string().nullable(),
 });
 export type Draft = z.infer<typeof DraftSchema>;
+
+export const IDEA_STATUSES = ['new', 'reviewing', 'doing', 'dropped'] as const;
+export type IdeaStatus = (typeof IDEA_STATUSES)[number];
+export const X_STATUS_URL = /^https:\/\/x\.com\/[A-Za-z0-9_]{1,15}\/status\/\d{1,25}$/;
+
+// Fields the model writes; the user can edit all of them.
+export const IdeaDraftSchema = z.object({
+  title: z.string(),
+  problem: z.string(),
+  insight: z.string(),
+  mvpScope: z.array(z.string()),
+  stack: z.array(z.string()),
+  promo: z.string(),
+  tags: z.array(z.string()),
+});
+export type IdeaDraft = z.infer<typeof IdeaDraftSchema>;
+
+export type Idea = IdeaDraft & {
+  id: string;
+  sourceStatusId: string;
+  sourceUrl: string; // always matches X_STATUS_URL
+  sourceAuthor: string;
+  sourceText: string;
+  status: IdeaStatus;
+  notes: string;
+  createdAt: string;
+};

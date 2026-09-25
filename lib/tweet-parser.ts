@@ -99,7 +99,9 @@ export function parseTweet(article: Element): Tweet | null {
   if (!link) return null;
   const textEl = outside(article, quote, SEL.tweetText)[0];
   const photos = outside(article, quote, SEL.photo) as HTMLImageElement[];
-  const mediaUrls = photos.map((p) => p.src).filter((u) => u.startsWith('https://pbs.twimg.com/')).slice(0, 4);
+  // Video posters too, so vision models can see video-only posts.
+  const posters = outside(article, quote, SEL.videoPoster).map((v) => v.getAttribute('poster') ?? '');
+  const mediaUrls = [...photos.map((p) => p.src), ...posters].filter((u) => u.startsWith('https://pbs.twimg.com/')).slice(0, 4);
   const mediaAlt = photos
     .map((p) => p.alt.trim())
     .filter((a) => a && !hasKeyword(KEYWORDS.genericImageAlt, a))

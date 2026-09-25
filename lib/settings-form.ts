@@ -13,6 +13,7 @@ export type SettingsForm = {
   bannedPhrases: string;
   maxReplyChars: string;
   readableLanguages: string;
+  ideaLanguage: string;
   minQuality: string;
   dimLowScore: boolean;
   debug: boolean;
@@ -56,6 +57,7 @@ export function fromForm(f: SettingsForm): Settings {
     bannedPhrases: lines(f.bannedPhrases),
     maxReplyChars: num(f.maxReplyChars),
     readableLanguages: f.readableLanguages.split(',').map((l) => l.trim().toLowerCase()).filter(Boolean),
+    ideaLanguage: f.ideaLanguage.trim().toLowerCase() || 'vi',
     minQuality: num(f.minQuality),
   });
 }

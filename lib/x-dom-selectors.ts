@@ -8,6 +8,7 @@ export const SEL = {
   time: 'time[datetime]',
   photo: '[data-testid="tweetPhoto"] img',
   video: '[data-testid="videoPlayer"], [data-testid="videoComponent"]',
+  videoPoster: 'video[poster]',
   // Quoted post is a div[role="link"] inside the parent article, not a nested article.
   quoteCandidate: 'div[role="link"]',
   actionBar: '[role="group"]',

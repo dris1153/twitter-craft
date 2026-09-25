@@ -6,7 +6,7 @@ describe('tweet-parser edge cases', () => {
     document.body.innerHTML = '';
   });
 
-  it('detects hasMedia true for video tweets (without mediaUrls)', () => {
+  it('detects hasMedia true for video tweets (without a poster there is no media URL)', () => {
     document.body.innerHTML = `
       <article data-testid="tweet">
         <div data-testid="User-Name">

@@ -99,6 +99,7 @@ export function SettingsView() {
         {text('bannedPhrases', 'Banned phrases', { rows: 4, hint: 'One per line.' })}
         {text('maxReplyChars', 'Max reply characters')}
         {text('readableLanguages', 'Languages you can review', { hint: 'Comma-separated codes. Others are drafted in English.' })}
+        {text('ideaLanguage', 'Idea notes language', { hint: 'Language code for saved ideas, e.g. vi or en.' })}
       </section>
 
       <div className="fixed inset-x-0 bottom-0 flex items-center gap-3 border-t bg-background p-3">
