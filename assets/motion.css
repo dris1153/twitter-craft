@@ -1,0 +1,197 @@
+/* Motion tokens (transitions.dev scale). Reference with var(--…); transition classes live below.
+   Every animation in the side panel reads these so timing stays consistent. */
+:root {
+  /* Durations */
+  --duration-stagger: 40ms;  /* per-item stagger offset */
+  --duration-micro: 80ms;  /* tooltip/path delay, shake segment, large stagger */
+  --duration-quick: 150ms;  /* modal/dropdown close, text swap, tooltip appear */
+  --duration-fast: 250ms;  /* icon swap, dropdown/modal open, tabs sliding, page slide */
+  --duration-medium: 350ms;  /* panel close, toast close */
+  --duration-slow: 400ms;  /* panel open, skeleton content reveal, input clear */
+  --duration-very-slow: 500ms;  /* emphasis moments, badge appear, text reveal, success check */
+  /* Easings */
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);  /* modal/dropdown/panel open + close, page slide, resize, position change */
+  --ease-in-out: ease-in-out;  /* icon swap, text swap, text reveal, skeleton reveal */
+  --ease-out: ease-out;  /* tooltip open / close */
+  --ease-linear: linear;  /* shimmer, skeleton pulse, spinner */
+  --ease-bounce: cubic-bezier(0.34, 1.36, 0.64, 1);  /* badge pop open */
+  --ease-bounce-strong: cubic-bezier(0.34, 3.85, 0.64, 1);  /* bouncy hover-out (avatar return) */
+  /* Distances */
+  --distance-micro: 4px;  /* text swap */
+  --distance-small: 6px;  /* error shake (small segment) */
+  --distance-base: 8px;  /* badge diagonal reveal, page slide, error shake (large segment) */
+  --distance-medium: 12px;  /* text reveal */
+  --distance-large: 30px;  /* check badge appear */
+  /* Scales */
+  --scale-large: 0.96;  /* modal open / close */
+  --scale-medium: 0.97;  /* dropdown open */
+  --scale-small: 0.98;  /* tooltip open */
+  --scale-tiny: 0.99;  /* dropdown close */
+  /* Blur */
+  --blur-small: 2px;  /* panel reveal, icon swap, text swap, skeleton reveal, number pop-in */
+  --blur-medium: 3px;  /* page slide, text reveal */
+  --blur-large: 8px;  /* success check open */
+}
+
+/* Tabs sliding (transitions.dev 16): JS writes offsetLeft/width onto the pill, CSS tweens it. */
+.t-tabs-pill {
+  transition:
+    transform var(--duration-fast) var(--ease-smooth-out),
+    width var(--duration-fast) var(--ease-smooth-out),
+    height var(--duration-fast) var(--ease-smooth-out);
+  will-change: transform, width;
+}
+.t-tab {
+  transition: color var(--duration-fast) var(--ease-smooth-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-tabs-pill,
+  .t-tab {
+    transition: none !important;
+  }
+}
+
+/* Shimmer text (15): duplicate the label into data-text. 2s sweep has no token (loops, not a transition). */
+.t-shimmer {
+  position: relative;
+  display: inline-block;
+  color: var(--ink-muted);
+}
+.t-shimmer::before {
+  content: attr(data-text) / "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 40%, var(--ink) 50%, transparent 60%) no-repeat;
+  background-size: 400% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: t-shimmer 2000ms var(--ease-linear) infinite;
+}
+@keyframes t-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0% 0; }
+}
+
+/* Texts reveal (18) as a mount animation, staggered by position among siblings.
+   ponytail: sibling-index() needs Chrome 138+, fine for a Chrome-only extension. */
+.t-reveal-item {
+  animation: t-reveal var(--duration-very-slow) var(--ease-in-out) backwards;
+  animation-delay: calc(max(sibling-index() - 2, 0) * var(--duration-stagger));
+}
+@keyframes t-reveal {
+  from { opacity: 0; transform: translateY(var(--distance-medium)); filter: blur(var(--blur-medium)); }
+}
+
+/* Text states swap (04): the label remounts (React key) and enters from below. */
+.t-text-swap {
+  display: inline-block;
+  animation: t-text-swap var(--duration-quick) var(--ease-in-out) backwards;
+}
+@keyframes t-text-swap {
+  from { opacity: 0; transform: translateY(var(--distance-micro)); filter: blur(var(--blur-small)); }
+}
+
+/* Toast (22): each new message remounts and opens. 16px travel has no token (toast rise). */
+.t-toast {
+  animation: t-toast var(--duration-medium) var(--ease-smooth-out) backwards;
+}
+@keyframes t-toast {
+  from { opacity: 0; transform: translateY(16px) scale(var(--scale-medium)); filter: blur(var(--blur-small)); }
+}
+
+/* Skeleton reveal (14): placeholder pulses until the PNG arrives, then the image fades in. */
+.t-skeleton {
+  animation: t-skeleton-pulse 1000ms var(--ease-linear) infinite;
+}
+@keyframes t-skeleton-pulse {
+  50% { opacity: 0.5; }
+}
+.t-skeleton-reveal {
+  animation: t-skeleton-reveal var(--duration-slow) var(--ease-in-out) backwards;
+}
+@keyframes t-skeleton-reveal {
+  from { opacity: 0; filter: blur(var(--blur-small)); }
+}
+
+/* Accordion (21): grid-rows 0fr/1fr, symmetric; padding lives inside the inner element. */
+.t-acc-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--duration-fast) var(--ease-smooth-out);
+}
+.t-acc[data-open="true"] .t-acc-panel {
+  grid-template-rows: 1fr;
+}
+.t-acc-panel-inner {
+  overflow: hidden;
+  opacity: 0;
+  filter: blur(var(--blur-small));
+  transition:
+    opacity var(--duration-fast) var(--ease-smooth-out),
+    filter var(--duration-fast) var(--ease-smooth-out);
+}
+.t-acc[data-open="true"] .t-acc-panel-inner {
+  opacity: 1;
+  filter: none;
+}
+.t-acc-chevron {
+  transition: transform var(--duration-fast) var(--ease-smooth-out);
+}
+.t-acc-chevron path {
+  vector-effect: non-scaling-stroke;
+}
+.t-acc[data-open="true"] .t-acc-chevron {
+  transform: scaleY(-1);
+}
+
+/* Checkbox check (25): native input + sibling SVG tick that draws in. */
+.t-check {
+  transition: background-color var(--duration-quick) var(--ease-smooth-out);
+}
+.t-check + svg path {
+  stroke-dasharray: 15;
+  stroke-dashoffset: 15;
+  transition: stroke-dashoffset var(--duration-quick) var(--ease-smooth-out);
+}
+.t-check:checked + svg path {
+  stroke-dashoffset: 0;
+  transition-duration: var(--duration-medium);
+}
+
+/* Toggle (27): the bounce easing gives the thumb its overshoot. */
+.t-toggle-thumb {
+  transition: translate var(--duration-medium) var(--ease-bounce);
+}
+
+/* Error state shake (12): four equal micro legs, large swing then small overshoot. */
+.t-shake {
+  animation: t-shake calc(var(--duration-micro) * 4) var(--ease-smooth-out);
+}
+@keyframes t-shake {
+  25% { transform: translateX(var(--distance-base)); }
+  50% { transform: translateX(calc(var(--distance-base) * -1)); }
+  75% { transform: translateX(var(--distance-small)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-shimmer::before,
+  .t-reveal-item,
+  .t-text-swap,
+  .t-toast,
+  .t-skeleton,
+  .t-skeleton-reveal,
+  .t-shake {
+    animation: none !important;
+  }
+  .t-acc-panel,
+  .t-acc-panel-inner,
+  .t-acc-chevron,
+  .t-check,
+  .t-check + svg path,
+  .t-toggle-thumb {
+    transition: none !important;
+  }
+}

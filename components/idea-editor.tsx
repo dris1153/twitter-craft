@@ -24,8 +24,8 @@ function fromForm(f: Form): IdeaFields {
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <label className="block space-y-1">
-      <span className="text-xs text-muted-foreground">{label}</span>
+    <label className="block space-y-1.5">
+      <span className="font-mono text-[11px] font-semibold tracking-[0.06em] text-ink-muted uppercase">{label}</span>
       {children}
     </label>
   );
@@ -64,7 +64,7 @@ export function IdeaEditor({ initial, showNotes, onChange, onCommit }: {
   });
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <Row label="Title"><Input {...bind('title')} /></Row>
       <Row label="Problem"><Textarea rows={2} {...bind('problem')} /></Row>
       <Row label="Insight from the post"><Textarea rows={2} {...bind('insight')} /></Row>

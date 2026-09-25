@@ -1,6 +1,6 @@
 import { getFontEmbedCSS, toBlob } from 'html-to-image';
 
-// Embedding fonts means reading every @font-face file; do it once per card kind (kinds use different fonts).
+// Embedding fonts means reading every @font-face file; do it once per card kind.
 const fontCss = new Map<string, Promise<string>>();
 
 const TIMEOUT_MS = 5000;

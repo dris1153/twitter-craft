@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Chip, PanelCard, type Accent } from '@/components/panel-card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import type { Variant } from '@/hooks/use-draft-session';
@@ -15,6 +16,9 @@ type Props = {
   onCopy: () => void;
   onSaveSample: () => void;
 };
+
+// One accent per angle, like colored pencils in a cup (DESIGN.md rainbow palette, decoration only).
+const ANGLE_ACCENT: Record<string, Accent> = { reaction: 'coral', question: 'periwinkle', take: 'mint', quote: 'lilac' };
 
 export function DraftVariantEditor({ variant, ctx, busy, onChange, onInsert, onCopy, onSaveSample }: Props) {
   const [confirming, setConfirming] = useState<InsertMode | null>(null);
@@ -39,18 +43,20 @@ export function DraftVariantEditor({ variant, ctx, busy, onChange, onInsert, onC
     <Button
       size="sm"
       disabled={empty || busy}
-      variant={confirming === mode ? 'destructive' : mode === 'reply' ? 'default' : 'secondary'}
+      variant={confirming === mode ? 'destructive' : mode === 'reply' ? 'default' : 'outline'}
       onClick={() => insert(mode)}
     >
-      {confirming === mode ? `${label} anyway` : label}
+      <span key={confirming === mode ? 'confirm' : 'idle'} className="t-text-swap">
+        {confirming === mode ? `${label} anyway` : label}
+      </span>
     </Button>
   );
 
   return (
-    <div className="space-y-2 rounded-lg border p-3">
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span className="font-medium uppercase tracking-wide">{variant.angle}</span>
-        <span className={length > ctx.maxChars ? 'text-destructive' : ''}>
+    <PanelCard accent={ANGLE_ACCENT[variant.angle] ?? 'sky'} className="t-reveal-item space-y-3 pt-5">
+      <div className="flex items-center justify-between">
+        <Chip>{variant.angle}</Chip>
+        <span className={`font-mono text-[11px] tabular-nums ${length > ctx.maxChars ? 'font-semibold text-danger' : 'text-ink-muted'}`}>
           {length}/{ctx.maxChars}
         </span>
       </div>
@@ -64,21 +70,22 @@ export function DraftVariantEditor({ variant, ctx, busy, onChange, onInsert, onC
         }}
       />
       {warnings.length > 0 && (
-        <ul className="space-y-0.5 text-xs text-destructive">
+        <ul className="space-y-0.5 rounded-sm border-[1.5px] border-ink bg-canary px-2.5 py-1.5 text-[11px] text-[#383838]">
           {warnings.map((w) => (
             <li key={w}>⚠ {WARNING_TEXT[w]}</li>
           ))}
         </ul>
       )}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2.5">
         {insertButton('reply', 'Reply')}
         {insertButton('quote', 'Quote')}
-        <Button size="sm" variant="outline" disabled={empty} onClick={onCopy}>
+        <Button size="sm" variant="ghost" disabled={empty} onClick={onCopy}>
           Copy
         </Button>
         <Button
           size="sm"
           variant="ghost"
+          className="ml-auto text-ink-muted"
           disabled={!canSave}
           title="After you edit and insert a reply, keep it as an example of your writing style"
           onClick={() => {
@@ -86,9 +93,9 @@ export function DraftVariantEditor({ variant, ctx, busy, onChange, onInsert, onC
             setSaved(true);
           }}
         >
-          {saved ? 'Saved as voice sample' : 'Save as voice sample'}
+          {saved ? 'Saved ✓' : 'Save voice'}
         </Button>
       </div>
-    </div>
+    </PanelCard>
   );
 }

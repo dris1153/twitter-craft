@@ -52,9 +52,9 @@ export function CardEditor({ card, onChange }: { card: Card; onChange: (card: Ca
           onChange(withBody(card, e.target.value));
         }}
       />
-      <p className="text-xs text-muted-foreground">
+      <p className="text-[11px] text-ink-muted">
         {HINT[card.kind]}
-        {lineCount > LIMIT[card.kind] && <span className="text-destructive"> · extra lines are left off the card</span>}
+        {lineCount > LIMIT[card.kind] && <span className="text-danger"> · extra lines are left off the card</span>}
       </p>
     </div>
   );
