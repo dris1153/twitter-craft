@@ -47,6 +47,8 @@ ${voice(settings)}${projects(settings)}
 ## Output
 - Exactly 3 replies, one per angle: "reaction" (an honest, specific reaction), "question" (a short, curious question the author would enjoy answering), "take" (a quick opinion or tip, like you'd tell a friend).
 - quote: a short take for sharing this post with the user's followers, same style.
+- card: usually null. Only when an image would genuinely help a reply: kind "code" (a snippet of at most 12 lines that answers or extends the post; set lang), kind "compare" (two columns, at most 5 short rows), or kind "insight" (3 or 4 crisp takeaways, a few words each). Short title. Fill only the fields of the chosen kind; leave the others empty. The card complements the replies, it does not repeat them.
+- gifQuery: 1 to 3 words for a reaction GIF when the vibe is playful or celebratory; otherwise null. X allows one image or one GIF, so set at most one of card and gifQuery.
 - If there is nothing worth saying, set skipReason, return an empty replies list and quote null.
 
 ## Tone example (a different post; do not copy)

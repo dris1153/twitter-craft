@@ -5,6 +5,7 @@ import { computePriority, isIdeaWorthy } from '@/lib/triage-priority';
 import type { DisplayPrefs, Triage, Tweet } from '@/lib/types';
 import { createVisibilityGate } from '@/lib/visibility-gate';
 import { expandTweet, insertDraft, isPanelMessage } from '@/lib/x-composer';
+import { openGifPicker } from '@/lib/x-composer-media';
 import { BADGE_ATTR, SEL } from '@/lib/x-dom-selectors';
 import { isTriageRoute } from '@/lib/x-routes';
 
@@ -31,8 +32,13 @@ export default defineContentScript({
     browser.runtime.onMessage.addListener((raw, sender, sendResponse) => {
       if (sender.id !== browser.runtime.id || sender.tab || !isPanelMessage(raw)) return;
       const work: Promise<unknown> =
-        raw.type === 'expand-tweet' ? expandTweet(raw.statusId) : insertDraft(raw.statusId, raw.mode, raw.text);
-      work.then(sendResponse, () => sendResponse(raw.type === 'expand-tweet' ? null : 'not_found'));
+        raw.type === 'expand-tweet'
+          ? expandTweet(raw.statusId)
+          : raw.type === 'open-gif-picker'
+            ? openGifPicker(raw.query)
+            : insertDraft(raw.statusId, raw.mode, raw.text, raw.imageDataUrl);
+      const fallback = { 'expand-tweet': null, 'open-gif-picker': 'no_gif_button', 'insert-draft': 'not_found' }[raw.type];
+      work.then(sendResponse, () => sendResponse(fallback));
       return true;
     });
 

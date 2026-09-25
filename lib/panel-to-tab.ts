@@ -1,10 +1,11 @@
-import type { InsertMode, InsertResult, PanelMessage } from './messages';
+import type { GifResult, InsertMode, InsertResult, PanelMessage } from './messages';
 import { TweetSchema, type Tweet } from './types';
 
 export type InsertOutcome = InsertResult | 'no_content_script';
 
 export const INSERT_MESSAGES: Record<InsertOutcome, string> = {
   inserted: 'Inserted. Review it in X, then click Post yourself.',
+  image_failed: 'Text inserted, but X did not take the card image. Click "Copy image" and paste it with Ctrl+V.',
   not_found: 'The tweet is no longer on screen. Draft copied: scroll back to it or paste manually.',
   dialog_open: 'Close the open X dialog first. Draft copied to your clipboard.',
   no_dialog: 'Could not open the reply box. Draft copied: paste it manually.',
@@ -29,10 +30,29 @@ export async function expandInTab(tabId: number, statusId: string): Promise<Twee
   }
 }
 
-export async function insertIntoTab(tabId: number, statusId: string, mode: InsertMode, text: string): Promise<InsertOutcome> {
+export async function insertIntoTab(
+  tabId: number, statusId: string, mode: InsertMode, text: string, imageDataUrl?: string,
+): Promise<InsertOutcome> {
   await browser.tabs.update(tabId, { active: true }).catch(() => {});
   try {
-    return (await send<InsertResult | undefined>(tabId, { type: 'insert-draft', statusId, mode, text })) ?? 'no_content_script';
+    const msg: PanelMessage = { type: 'insert-draft', statusId, mode, text, ...(imageDataUrl ? { imageDataUrl } : {}) };
+    return (await send<InsertResult | undefined>(tabId, msg)) ?? 'no_content_script';
+  } catch {
+    return 'no_content_script';
+  }
+}
+
+export const GIF_MESSAGES: Record<GifResult | 'no_content_script', string> = {
+  gif_opened: 'GIF picker opened with your search. Pick one, then click Post yourself.',
+  no_dialog: 'Insert a reply or quote first, then add a GIF. Search copied.',
+  no_gif_button: "Could not open X's GIF picker. Search copied: open it yourself and paste.",
+  gif_disabled: 'X allows either an image or a GIF. Remove the card image from the reply first.',
+  no_content_script: 'Cannot reach the x.com tab (reload it). Search copied.',
+};
+
+export async function openGifInTab(tabId: number, query: string): Promise<GifResult | 'no_content_script'> {
+  try {
+    return (await send<GifResult | undefined>(tabId, { type: 'open-gif-picker', query })) ?? 'no_content_script';
   } catch {
     return 'no_content_script';
   }

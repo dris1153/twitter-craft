@@ -1,26 +1,21 @@
 import type { InsertMode, InsertResult, PanelMessage } from './messages';
+import { composerDialog, pasteImage } from './x-composer-media';
+import { sleep, waitFor } from './wait-for';
 import { findQuote, isTopLevelTweet, parseTweet, quickStatusId } from './tweet-parser';
 import type { Tweet } from './types';
 import { SEL } from './x-dom-selectors';
 import { KEYWORDS } from './x-locale-keywords';
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-export async function waitFor<T>(find: () => T | null | undefined, timeoutMs: number): Promise<T | null> {
-  const end = Date.now() + timeoutMs;
-  for (;;) {
-    const found = find();
-    if (found) return found;
-    if (Date.now() >= end) return null;
-    await sleep(100);
-  }
-}
+const PNG_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
 
 export function isPanelMessage(raw: unknown): raw is PanelMessage {
-  const m = raw as { type?: string; statusId?: unknown; mode?: unknown; text?: unknown } | null;
+  const m = raw as { type?: string; statusId?: unknown; mode?: unknown; text?: unknown; imageDataUrl?: unknown; query?: unknown } | null;
+  if (m?.type === 'open-gif-picker') return typeof m.query === 'string' && m.query.length > 0 && m.query.length <= 60;
   if (!m || typeof m.statusId !== 'string' || !/^\d{1,25}$/.test(m.statusId)) return false;
   if (m.type === 'expand-tweet') return true;
-  return m.type === 'insert-draft' && (m.mode === 'reply' || m.mode === 'quote') && typeof m.text === 'string' && m.text.length > 0;
+  const image = m.imageDataUrl;
+  const imageOk = image === undefined || (typeof image === 'string' && image.length < 5_000_000 && PNG_DATA_URL.test(image));
+  return m.type === 'insert-draft' && (m.mode === 'reply' || m.mode === 'quote') && typeof m.text === 'string' && m.text.length > 0 && imageOk;
 }
 
 // Exact id on a top-level article; a substring href match would also hit tweets that quote this one.
@@ -33,7 +28,6 @@ function mainElement(article: Element, selector: string): HTMLElement | null {
   return ([...article.querySelectorAll<HTMLElement>(selector)].find((el) => !quote?.contains(el)) ?? null);
 }
 
-const composerDialog = () => [...document.querySelectorAll(SEL.dialog)].find((d) => d.querySelector(SEL.composer)) ?? null;
 
 function quoteMenuItem(): HTMLElement | null {
   return (
@@ -85,17 +79,17 @@ let busy = false;
 
 // Opens X's own reply/quote dialog and types the draft. Never clicks Post.
 // One at a time: two concurrent inserts would both wait for, and type into, the same dialog.
-export async function insertDraft(statusId: string, mode: InsertMode, text: string): Promise<InsertResult> {
+export async function insertDraft(statusId: string, mode: InsertMode, text: string, imageDataUrl?: string): Promise<InsertResult> {
   if (busy || composerDialog()) return 'dialog_open';
   busy = true;
   try {
-    return await openAndType(statusId, mode, text);
+    return await openAndType(statusId, mode, text, imageDataUrl);
   } finally {
     busy = false;
   }
 }
 
-async function openAndType(statusId: string, mode: InsertMode, text: string): Promise<InsertResult> {
+async function openAndType(statusId: string, mode: InsertMode, text: string, imageDataUrl?: string): Promise<InsertResult> {
   const article = findArticleById(statusId);
   if (!article) return 'not_found';
   const handle = parseTweet(article)?.authorHandle ?? '';
@@ -117,7 +111,9 @@ async function openAndType(statusId: string, mode: InsertMode, text: string): Pr
   if (!targetsTweet(dialog, statusId, handle)) return 'wrong_target';
   const composer = dialog.querySelector<HTMLElement>(SEL.composer);
   if (!composer || !(await typeInto(composer, text))) return 'insert_mismatch';
-  return (await waitFor(() => postEnabled(dialog), 1000)) ? 'inserted' : 'insert_mismatch';
+  if (!(await waitFor(() => postEnabled(dialog), 1000))) return 'insert_mismatch';
+  if (imageDataUrl && !(await pasteImage(dialog, composer, imageDataUrl))) return 'image_failed';
+  return 'inserted';
 }
 
 // Clicks X's inline "Show more" button (never a link, which would navigate), then re-parses.

@@ -1,4 +1,4 @@
-import type { Project, Triage, Tweet } from './types';
+import type { Card, Project, Triage, Tweet } from './types';
 
 export type DraftWarning = 'url' | 'handle' | 'bait' | 'too_long';
 
@@ -66,4 +66,10 @@ export function checkDraft(
   // ponytail: code-point count; X counts some chars (emoji, many Vietnamese letters) as 2. Fine with Premium limits.
   if ([...text].length > ctx.maxChars) warnings.push('too_long');
   return warnings;
+}
+
+// Card text is model output too, and it gets attached as an image: same planted-link/handle checks.
+export function checkCard(card: Card, ctx: { tweet: Tweet; projects: Project[] }): DraftWarning[] {
+  const text = [card.title, ...card.bullets, card.code, card.columns.a, card.columns.b, ...card.rows.flatMap((r) => [r.label, r.a, r.b])];
+  return checkDraft(text.join('\n'), { ...ctx, triage: null, maxChars: Infinity }).filter((w) => w === 'url' || w === 'handle');
 }

@@ -81,12 +81,29 @@ export type DisplayPrefs = z.infer<typeof DisplayPrefsSchema>;
 // Casual angles on purpose: "insight"/"practical" pushed the model into lecturing (user feedback).
 export const REPLY_ANGLES = ['reaction', 'question', 'take'] as const;
 
+export const CARD_KINDS = ['insight', 'code', 'compare'] as const;
+
+// One flat object instead of a union: OpenAI strict mode wants every key required and no tuples,
+// so fields that don't apply to a kind come back empty.
+export const CardSchema = z.object({
+  kind: z.enum(CARD_KINDS),
+  title: z.string(),
+  bullets: z.array(z.string()), // insight
+  lang: z.string(), // code
+  code: z.string(), // code
+  columns: z.object({ a: z.string(), b: z.string() }), // compare
+  rows: z.array(z.object({ label: z.string(), a: z.string(), b: z.string() })), // compare
+});
+export type Card = z.infer<typeof CardSchema>;
+
 // OpenAI strict structured outputs: nullable (not optional), no tuples.
-export const DraftSchema = z.object({
+export const DraftTextSchema = z.object({
   skipReason: z.string().nullable(),
   replies: z.array(z.object({ angle: z.enum(REPLY_ANGLES), text: z.string() })),
   quote: z.string().nullable(),
+  gifQuery: z.string().nullable(),
 });
+export const DraftSchema = DraftTextSchema.extend({ card: CardSchema.nullable() });
 export type Draft = z.infer<typeof DraftSchema>;
 
 export const IDEA_STATUSES = ['new', 'reviewing', 'doing', 'dropped'] as const;

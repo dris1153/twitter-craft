@@ -23,7 +23,7 @@ const tweet = (id: string): Tweet => ({
 const action = (id: string): PendingAction => ({
   nonce: id, at: Date.now(), windowId: 1, tabId: 1, kind: 'draft', tweet: tweet(id), triage: null,
 });
-const draft = (text: string): Draft => ({ skipReason: null, replies: [{ angle: 'reaction', text }], quote: null });
+const draft = (text: string): Draft => ({ skipReason: null, replies: [{ angle: 'reaction', text }], quote: null, gifQuery: null, card: null });
 
 describe('useDraftSession ordering', () => {
   beforeEach(async () => {

@@ -1,15 +1,20 @@
 import { useState } from 'react';
+import { CardPanel } from '@/components/card-panel';
 import { DraftVariantEditor } from '@/components/draft-variant-editor';
 import { Button } from '@/components/ui/button';
 import type { useDraftSession, VariantKey } from '@/hooks/use-draft-session';
+import { cardImageFor, type CardRenderState } from '@/lib/card-attach';
+import { checkCard } from '@/lib/draft-safety-checks';
 import type { InsertMode } from '@/lib/messages';
-import { INSERT_MESSAGES, insertIntoTab } from '@/lib/panel-to-tab';
+import { GIF_MESSAGES, INSERT_MESSAGES, insertIntoTab, openGifInTab } from '@/lib/panel-to-tab';
 import { addVoiceSample } from '@/lib/settings-store';
 
 type Props = ReturnType<typeof useDraftSession>;
 
-export function DraftView({ session, queued, acceptQueued, dismissQueued, regenerate, update }: Props) {
+export function DraftView(props: Props) {
+  const { session, queued, acceptQueued, dismissQueued, regenerate, update, setCard, setAttachCard } = props;
   const [toast, setToast] = useState('');
+  const [cardState, setCardState] = useState<CardRenderState | null>(null);
   const [inserting, setInserting] = useState(false);
   const [confirmRegen, setConfirmRegen] = useState(false);
 
@@ -18,6 +23,16 @@ export function DraftView({ session, queued, acceptQueued, dismissQueued, regene
   }
   const s = session;
   const ctx = { tweet: s.tweet, triage: s.triage, projects: s.projects, maxChars: s.maxChars };
+  const cardImage = cardImageFor(s, cardState);
+  // While the card image renders, wait instead of inserting the reply without it.
+  const insertBusy = inserting || cardImage.wait;
+  const onCardState = (state: CardRenderState) => {
+    setCardState(state);
+    if (state.status === 'failed' && s.attachCard) {
+      setAttachCard(false); // never leave Insert blocked on an image that won't come
+      setToast('Card image failed to render, so it was unticked. Replies go in as text only.');
+    }
+  };
 
   const copy = (text: string, message = 'Copied.') => {
     navigator.clipboard.writeText(text).then(
@@ -32,12 +47,17 @@ export function DraftView({ session, queued, acceptQueued, dismissQueued, regene
     const tweetId = s.tweet.id;
     setInserting(true);
     setToast('Inserting…');
-    void Promise.all([insertIntoTab(s.tabId, tweetId, mode, text), copied]).then(([outcome, ok]) => {
+    void Promise.all([insertIntoTab(s.tabId, tweetId, mode, text, cardImage.image), copied]).then(([outcome, ok]) => {
       setInserting(false);
       const fallback = ok ? '' : ' (Clipboard was blocked: use the Copy button.)';
       setToast(INSERT_MESSAGES[outcome] + (outcome === 'inserted' ? '' : fallback));
-      if (outcome === 'inserted') update(key, { inserted: true }, tweetId);
+      if (outcome === 'inserted' || outcome === 'image_failed') update(key, { inserted: true }, tweetId);
     });
+  };
+
+  const addGif = (query: string) => {
+    void navigator.clipboard.writeText(query).catch(() => {}); // fallback if the picker can't be driven
+    void openGifInTab(s.tabId, query).then((r) => setToast(GIF_MESSAGES[r]));
   };
 
   const regenerateClicked = () => {
@@ -55,7 +75,7 @@ export function DraftView({ session, queued, acceptQueued, dismissQueued, regene
         key={key}
         variant={v}
         ctx={ctx}
-        busy={inserting}
+        busy={insertBusy}
         onChange={(text) => update(key, { text })}
         onInsert={(mode) => insert(key, mode, v.text)}
         onCopy={() => {
@@ -99,6 +119,26 @@ export function DraftView({ session, queued, acceptQueued, dismissQueued, regene
           <h3 className="text-xs font-semibold">Suggested quote post</h3>
           {editor('quote')}
         </div>
+      )}
+
+      {s.card && (
+        <CardPanel
+          key={s.id}
+          card={s.card}
+          attach={s.attachCard}
+          handle={s.handle}
+          warnings={checkCard(s.card, ctx)}
+          onChange={setCard}
+          onAttach={setAttachCard}
+          onRenderState={onCardState}
+          onToast={setToast}
+        />
+      )}
+      {/* X takes one image or one GIF: no GIF button while the card is attached. */}
+      {s.gifQuery && !(s.attachCard && s.card) && (
+        <Button size="sm" variant="outline" disabled={inserting} onClick={() => addGif(s.gifQuery!)} title="Opens X's GIF picker in the open reply box">
+          Add GIF: {s.gifQuery}
+        </Button>
       )}
 
       {s.status !== 'loading' && (

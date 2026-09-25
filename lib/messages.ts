@@ -21,9 +21,18 @@ export type TriageResponse =
 // Side panel → content script (tabs.sendMessage). Only our own extension pages can send these.
 export type PanelMessage =
   | { type: 'expand-tweet'; statusId: string }
-  | { type: 'insert-draft'; statusId: string; mode: InsertMode; text: string };
+  | { type: 'insert-draft'; statusId: string; mode: InsertMode; text: string; imageDataUrl?: string }
+  | { type: 'open-gif-picker'; query: string };
 export type InsertMode = 'reply' | 'quote';
-export type InsertResult = 'inserted' | 'not_found' | 'dialog_open' | 'no_dialog' | 'wrong_target' | 'insert_mismatch';
+export type InsertResult =
+  | 'inserted'
+  | 'image_failed' // text is in, the card image was not accepted
+  | 'not_found'
+  | 'dialog_open'
+  | 'no_dialog'
+  | 'wrong_target'
+  | 'insert_mismatch';
+export type GifResult = 'gif_opened' | 'no_dialog' | 'no_gif_button' | 'gif_disabled';
 
 export type PendingAction = {
   nonce: string;

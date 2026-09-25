@@ -1,27 +1,33 @@
 import { useCallback, useRef, useState } from 'react';
+import { checkCard } from '@/lib/draft-safety-checks';
 import { draftErrorText, generateDraft } from '@/lib/draft-generator';
 import type { PendingAction } from '@/lib/messages';
 import { expandInTab } from '@/lib/panel-to-tab';
 import { getSettings } from '@/lib/settings-store';
-import type { Project, Triage, Tweet } from '@/lib/types';
+import type { Card, Project, Triage, Tweet } from '@/lib/types';
 
 // `original` is the model's text: only user-edited text may become a voice sample (it feeds future instructions).
 export type Variant = { angle: string; text: string; original: string; inserted: boolean };
 export type VariantKey = number | 'quote';
 
 export type DraftSession = {
+  id: number; // per generation; lets child editors reset when a new draft arrives
   tweet: Tweet;
   triage: Triage | null;
   tabId: number;
   status: 'loading' | 'ready' | 'error';
   variants: Variant[];
   quote: Variant | null;
+  card: Card | null;
+  attachCard: boolean;
+  gifQuery: string | null;
   skipReason: string | null;
   error: string | null;
   note: string | null;
   edited: boolean;
   maxChars: number;
   projects: Project[];
+  handle: string;
 };
 
 export function useDraftSession() {
@@ -39,8 +45,9 @@ export function useDraftSession() {
     current.current = me;
     const stale = () => current.current !== me;
     const base = {
-      triage, tabId, maxChars: 280, projects: [] as Project[],
-      variants: [], quote: null, skipReason: null, error: null, note: null, edited: false,
+      id: me.id, triage, tabId, maxChars: 280, projects: [] as Project[], handle: '',
+      variants: [], quote: null, card: null, attachCard: false, gifQuery: null,
+      skipReason: null, error: null, note: null, edited: false,
     };
     setSession({ ...base, tweet, status: 'loading' });
 
@@ -51,6 +58,7 @@ export function useDraftSession() {
       if (stale()) return;
       base.maxChars = settings.maxReplyChars;
       base.projects = settings.projects;
+      base.handle = settings.handle;
       if (tweet.truncated) {
         const expanded = await expandInTab(tabId, tweet.id);
         if (stale()) return;
@@ -64,6 +72,9 @@ export function useDraftSession() {
         ...base, tweet: full, note, status: 'ready', skipReason: draft.skipReason,
         variants: draft.replies.map((r) => variant(r.angle, r.text)),
         quote: draft.quote ? variant('quote', draft.quote) : null,
+        // A card with an unknown link or @handle starts unattached; the user has to opt in.
+        card: draft.card, gifQuery: draft.gifQuery,
+        attachCard: draft.card !== null && checkCard(draft.card, { tweet: full, projects: base.projects }).length === 0,
       });
     } catch (err) {
       if (stale()) return;
@@ -100,5 +111,10 @@ export function useDraftSession() {
       return { ...s, edited, variants: s.variants.map((v, i) => (i === key ? { ...v, ...patch } : v)) };
     });
 
-  return { session, queued, receive, acceptQueued, dismissQueued: () => setQueued(null), regenerate, update };
+  const setCard = (card: Card) => setSession((s) => (s ? { ...s, card, edited: true } : s));
+  const setAttachCard = (attachCard: boolean) => setSession((s) => (s ? { ...s, attachCard } : s));
+
+  return {
+    session, queued, receive, acceptQueued, dismissQueued: () => setQueued(null), regenerate, update, setCard, setAttachCard,
+  };
 }

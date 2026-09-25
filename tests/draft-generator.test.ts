@@ -22,6 +22,10 @@ const draftJson = {
     { angle: 'reaction', text: 'extra one the model should not have sent' },
   ],
   quote: '',
+  gifQuery: ' shipit ',
+  card: {
+    kind: 'code', title: 'Replay a trace', bullets: [], lang: 'ts', code: 'replay(trace)\n', columns: { a: '', b: '' }, rows: [],
+  },
 };
 
 const openaiResponse = (text: string) =>
@@ -52,7 +56,7 @@ describe('generateDraft', () => {
     const body = JSON.parse(init.body);
     expect(body.model).toBe('gpt-5.6-terra');
     expect(body.text.format).toMatchObject({ type: 'json_schema', strict: true });
-    expect(JSON.stringify(body.text.format.schema)).not.toMatch(/prefixItems/);
+    expect(JSON.stringify(body.text.format.schema)).not.toMatch(/prefixItems|allOf|"items":\[/);
     expect(JSON.stringify(body.input)).toContain('https://pbs.twimg.com/media/X.jpg');
     expect(new Headers(init.headers).get('authorization')).toBe('Bearer sk-test');
     expect(body.store).toBe(false);
@@ -60,6 +64,25 @@ describe('generateDraft', () => {
     expect(draft.replies).toHaveLength(3);
     expect(draft.replies[0]!.text).toBe('Regressions cluster around tool schemas in my experience');
     expect(draft.quote).toBeNull();
+    expect(draft.gifQuery).toBe('shipit');
+    expect(draft.card).toMatchObject({ kind: 'code', code: 'replay(trace)' });
+    expect(Object.keys(body.text.format.schema.properties)).toEqual(['skipReason', 'replies', 'quote', 'gifQuery', 'card']);
+  });
+
+  it('retries once without the card when the card breaks the schema', async () => {
+    const broken = { ...draftJson, card: { kind: 'poster', title: 1 } };
+    const textOnly = { skipReason: null, replies: draftJson.replies, quote: null, gifQuery: null };
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(openaiResponse(JSON.stringify(broken)))
+      .mockResolvedValueOnce(openaiResponse(JSON.stringify(textOnly)));
+    vi.stubGlobal('fetch', fetch);
+
+    const draft = await generateDraft(tweet, null, new AbortController().signal);
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetch.mock.calls[1]![1].body).text.format.schema.properties).not.toHaveProperty('card');
+    expect(draft.card).toBeNull();
+    expect(draft.replies).toHaveLength(3);
   });
 
   it('never sends protected or promoted posts', async () => {

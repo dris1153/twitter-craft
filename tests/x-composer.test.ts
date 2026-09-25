@@ -99,6 +99,13 @@ describe('insertDraft: quote, concurrency, focus', () => {
     expect(document.getElementById('q')!.textContent).toBe('Hermite for homing is a neat trick');
   });
 
+  it('types the text but reports image_failed when X shows no attached image', async () => {
+    openDialogOnReply();
+    const png = 'data:image/png;base64,iVBORw0KGgo=';
+    expect(await insertDraft(ID, 'reply', 'with a card', png)).toBe('image_failed');
+    expect(document.getElementById('dialog-composer')!.textContent).toBe('with a card');
+  });
+
   it('runs one insert at a time', async () => {
     openDialogOnReply();
     const [first, second] = await Promise.all([insertDraft(ID, 'reply', 'one'), insertDraft(ID, 'quote', 'two')]);

@@ -47,6 +47,8 @@ describe('useDraftSession', () => {
       skipReason: null,
       replies: [{ angle: 'reaction', text: 'Nice point' }],
       quote: null,
+      gifQuery: null,
+      card: null,
     });
   });
 

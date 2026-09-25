@@ -26,6 +26,10 @@ export const SEL = {
   postButton: '[data-testid="tweetButton"]',
   quoteMenuItem: 'a[href*="/compose/"][role="menuitem"]',
   menuItem: '[role="menuitem"]',
+  // Unverified on live X; if they drift, the side panel falls back to clipboard (image) or copying the query (GIF).
+  attachedMedia: '[data-testid="attachments"] img, img[src^="blob:"]',
+  gifButton: '[data-testid="gifSearchButton"]',
+  gifSearchInput: 'input[data-testid="gifSearchSearchInput"], [role="dialog"] input[type="search"], [role="dialog"] input[type="text"]',
 } as const;
 
 export const BADGE_ATTR = 'data-twitter-craft';
