@@ -1,5 +1,49 @@
 # Project Changelog
 
+## 0.3.0 (2026-09-25)
+
+**Phase 3: Ideas/TODO + Markdown Export — In Progress (Code Complete, Live Test Pending)**
+
+### Completed
+
+**Reply Tone Refined**
+- Angles changed from {insight, question, practical} to {reaction, question, take}
+- Reaction: specific, honest response to what stands out
+- Question: short, curious question the author would enjoy answering  
+- Take: quick opinion or tip, like you'd tell a friend
+- Quote suggestions included in every draft
+
+**Parser Enhancement: Video Poster URLs**
+- Video poster images now included in `mediaUrls` (line 103 in tweet-parser.ts: SEL.videoPoster)
+- Enables vision models to see video-only posts via poster thumbnail
+
+**Phase 3: Ideas/TODO + Markdown Export**
+- Badge kind now 'idea' for idea-worthy posts (buildIdea ≥ 0.6)
+- Side panel: Draft, Ideas, Settings tabs; Draft and Ideas stay mounted
+- Idea capture (hooks/use-idea-capture.ts):
+  - Dedupes by status ID
+  - Expands truncated ideas via lib/idea-expander.ts (ideaModel, ideaLanguage setting default 'vi')
+  - Fields: title, problem, insight, mvpScope, stack, promo, tags
+- Ideas store (lib/ideas-store.ts):
+  - Persistent storage: `local:ideas` 
+  - Promise-chain mutex prevents concurrent write losses
+  - URL validation: x.com status links only (lib/draft-safety-checks.ts isProjectUrl)
+- Ideas list: filter by status, inline edit with autosave (blur + 800 ms), status select, delete confirm, Open post
+- Markdown export (lib/ideas-markdown-export.ts):
+  - Grouped by status
+  - Task lists (✓ done, ☐ pending, ◉ in-progress)
+  - Fenced source post, all text escaped
+  - Only x.com status links + project URLs clickable; other links/emails as inline code
+- Shared assertSendable (lib/ai-models.ts): protected/ad posts never sent to AI for triage, draft, or idea
+
+### Known Issues / Open Items
+
+**Phase 3 Live Spike**
+- [ ] Ideas accumulation over real sessions
+- [ ] Markdown export file format on real x.com
+
+---
+
 ## 0.2.0 (2026-09-25)
 
 **Phase 2: GPT Draft + Composer Insert — In Progress (Code Complete, Live Test Pending)**

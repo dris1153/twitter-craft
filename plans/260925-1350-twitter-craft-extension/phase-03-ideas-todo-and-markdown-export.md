@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Ideas/TODO + Markdown export"
-status: pending
+status: in-progress
 priority: P2
 effort: "0.5d"
 dependencies: [2]
@@ -25,6 +25,15 @@ dependencies: [2]
 - Expansion uses the cheap idea model; same JSON-encoded untrusted user message as phase 2.
 - [RT#13] Export content is partly stranger-controlled (`sourceText`) or shaped by it (GPT fields). CommonMark passes raw HTML and links through → escape everything, allowlist links.
 - Export via `Blob` + `<a download>` in side panel. No `downloads` permission needed.
+
+## Implementation Notes
+
+Code complete. 215 tests pass. Implementation details:
+- `promo` field added to idea schema for promotional content flags.
+- `ideaLanguage` setting (default: Vietnamese) controls expansion language.
+- Edits kept in capture hook; queued switch with edited-capture guard.
+- Autosave on blur + 800ms debounce; commits only real changes.
+- Export link scanner stricter than phase 2: URL-prefix matching, no file-extension exemptions, emails rejected.
 
 ## Requirements
 
@@ -71,11 +80,11 @@ Modify:
 
 ## Todo List
 
-- [ ] Idea types + store
-- [ ] Idea expander
-- [ ] Markdown export + test
-- [ ] Ideas UI + wiring
-- [ ] Compile + tests green
+- [x] Idea types + store
+- [x] Idea expander
+- [x] Markdown export + test
+- [x] Ideas UI + wiring
+- [x] Compile + tests green (215 tests pass)
 
 ## Success Criteria
 

@@ -7,8 +7,8 @@ Three execution contexts with distinct trust and capability boundaries:
 | Context | Trust | Readable Storage | Outbound APIs | Purpose |
 |---------|-------|------------------|---------------|---------|
 | **Content Script** | Untrusted (shares x.com's renderer) | — | `browser.runtime.sendMessage` only | Parse/render tweets |
-| **Background SW** | Trusted extension code | `local:settings`, `session:*` (TRUSTED_CONTEXTS) | `https://api.typesafe.ai/*` `https://api.openai.com/*` | API keys, triage, cache |
-| **Side Panel** | Trusted extension code | `local:settings` | None (for phase 1) | Settings UI |
+| **Background SW** | Trusted extension code | `local:settings`, `local:ideas`, `session:*` (TRUSTED_CONTEXTS) | `https://api.typesafe.ai/*` `https://api.openai.com/*` | API keys, triage, cache, ideas |
+| **Side Panel** | Trusted extension code | `local:settings`, `local:ideas` | None | Settings UI, Draft tab, Ideas tab |
 
 ## Message Flow
 
@@ -81,6 +81,43 @@ Draft Safety (Phase 2)
   │   ├─ Detect bait patterns (common engagement tricks)
   │   ├─ Check text length against maxReplyChars
   │   └─ If risky: confirm before insert
+
+### Ideas Path (Phase 3)
+
+```
+Side Panel (Ideas Tab)
+  ├─ Mounted on side panel open; stays mounted alongside Draft
+  ├─ User clicks badge with kind='idea' (buildIdea ≥ 0.6)
+  ├─ Ideas View calls lib/idea-expander.ts:
+  │   ├─ Check cache: existing idea by sourceStatusId
+  │   ├─ If new: call OpenAI with ideaModel to expand truncated insight
+  │   ├─ Build IdeaDraft: {title, problem, insight, mvpScope, stack, promo, tags}
+  │   ├─ Use ideaLanguage setting (default 'vi')
+  │   └─ Return expanded idea ready for user edit
+  ├─ User inline edits idea (blur + 800ms autosave):
+  │   ├─ Call lib/ideas-store.ts:updateIdea()
+  │   ├─ Mutation via promise-chain to prevent concurrent write loss
+  │   └─ Store in `local:ideas` persisted array
+  ├─ Ideas List:
+  │   ├─ Filter by status (pending, in-progress, done)
+  │   ├─ Inline status select (single click)
+  │   ├─ Delete with confirmation
+  │   ├─ Open post link (x.com status URL validation)
+  │   └─ Each idea de-duped by sourceStatusId
+  ├─ Markdown Export (lib/ideas-markdown-export.ts):
+  │   ├─ Group ideas by status (## Pending, ## In Progress, ## Done)
+  │   ├─ Task list format: ☐ pending, ◉ in-progress, ✓ done
+  │   ├─ Fenced code block for source post (all text escaped)
+  │   ├─ Only x.com status URLs + project URLs clickable
+  │   ├─ Other links/emails rendered as inline code
+  │   └─ Export as .md file (user download)
+
+Ideas Safety (Phase 3)
+  ├─ lib/draft-safety-checks.ts:assertSendable():
+  │   ├─ Skip protected/ad posts for idea generation
+  │   ├─ Skip protected/ad posts for triage (applies to ideas too)
+  │   ├─ isProjectUrl() validates x.com URLs + project whitelist
+  │   └─ All other URLs and emails rendered as literal code
 ```
 
 ## Trust Boundary: Content Script → Background
@@ -119,9 +156,10 @@ Manages concurrent API calls and rate limiting:
 | Key | Type | Access | Lifetime | Content |
 |-----|------|--------|----------|---------|
 | `local:settings` | local | TRUSTED_CONTEXTS | Persist | API keys, interests, projects, voice samples, banned phrases, preferences |
+| `local:ideas` | local | — | Persist | Array of Idea objects {id, title, problem, insight, mvpScope, stack, promo, tags, status, sourceStatusId, sourceUrl} |
 | `session:triage:{hash}:{id}` | session | — | Session | Cached Jev triage result for one tweet |
 | `session:triagePausedUntil` | session | — | Session | Epoch ms; if > now(), queue is paused |
-| `session:pendingAction` | session | — | Session | Nonce + tweet + triage awaiting side panel open |
+| `session:pendingAction` | session | — | Session | Nonce + tweet + triage + kind awaiting side panel open |
 
 **Content script cannot read `local:settings`** — background SW sanitizes and sends only `DisplayPrefs` (`minQuality`, `dimLowScore`, `debug`).
 

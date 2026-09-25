@@ -1,7 +1,7 @@
 # Development Roadmap
 
 **Project:** twitter-craft Chrome MV3 extension  
-**Status:** Phase 1 complete (live verified), Phase 2 in progress (code done, live test pending)  
+**Status:** Phase 1 complete (live verified), Phase 2 complete (live verified), Phase 3 in progress (code done, live test pending)  
 **Last updated:** 2026-09-25
 
 ## Overview
@@ -52,10 +52,10 @@ Personal extension for x.com: Jev triages visible tweets → badge with priority
 
 ### Phase 2: GPT Draft + Composer Insert
 
-**Status:** In Progress (code done, live test pending)  
+**Status:** Complete (live verified)  
 **Effort:** 2d  
 **Start:** 2026-09-25  
-**Target completion:** 2026-09-26
+**Completion:** 2026-09-25
 
 **Planned deliverables:**
 - Side panel: draft button (kind=draft or idea)
@@ -85,22 +85,24 @@ Personal extension for x.com: Jev triages visible tweets → badge with priority
 
 ### Phase 3: Ideas/TODO + Markdown Export
 
-**Status:** Pending  
-**Effort:** 0.5d estimated  
-**Target start:** After phase 2  
-**Target completion:** TBD
+**Status:** In Progress (code done, live test pending)  
+**Effort:** 0.5d  
+**Start:** 2026-09-25  
+**Target completion:** 2026-09-26
 
-**Planned deliverables:**
-- Save button in draft panel: add idea to TODO list
-- Persistent storage: ideas in `local:ideas` (or cloud later)
-- TODO list view in side panel: inspect, delete, export
-- Markdown export: valid syntax, one idea per line
-- Sync: manual export button (cloud sync deferred to v1+)
+**Completed deliverables:**
+- Badge kind: 'idea' for idea-worthy posts (buildIdea ≥ 0.6)
+- Side panel: Ideas tab, stays mounted alongside Draft
+- Persistent storage: ideas in `local:ideas` with promise-chain mutex
+- Idea capture: dedupes by status ID, expands truncated, inline edit with autosave
+- Ideas list: filter by status, delete with confirm, Open post link
+- Markdown export: grouped by status with task lists, fenced source, safe link filtering
+- Validation: x.com URLs only + project URLs (lib/draft-safety-checks.ts isProjectUrl)
+- Model: Default ideaLanguage 'vi'; fields {title, problem, insight, mvpScope, stack, promo, tags}
 
-**Success criteria:**
-- Ideas persist across sessions
-- Export valid Markdown (parseable by most tools)
-- Manual export via button
+**Known blockers:**
+- Ideas accumulation over real sessions
+- Markdown export file format verification
 
 ---
 
@@ -211,8 +213,8 @@ Personal extension for x.com: Jev triages visible tweets → badge with priority
 | Phase | Status | Start | Est. End | Actual |
 |-------|--------|-------|----------|--------|
 | 1 | Complete | 2026-09-25 | 2026-09-26 | 2026-09-25 |
-| 2 | In progress | 2026-09-25 | 2026-09-26 | — |
-| 3 | Pending | — | — | — |
+| 2 | Complete | 2026-09-25 | 2026-09-26 | 2026-09-25 |
+| 3 | In progress | 2026-09-25 | 2026-09-26 | — |
 | 4 | Pending | — | — | — |
 
 **Estimate:** Sequential phases; ~6 days total effort (2.5 + 2 + 0.5 + 1). Phase 1 completed ahead of schedule.

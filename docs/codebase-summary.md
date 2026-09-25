@@ -18,6 +18,9 @@ One-line description per source file.
 | `components/settings-view.tsx` | 112 | Settings form UI: API keys, triage prefs, voice config; loads/saves to storage |
 | `components/draft-view.tsx` | 110+ | Draft tab UI: display generated drafts, edit variants, insert into composer, save voice samples |
 | `components/draft-variant-editor.tsx` | — | Reusable draft variant editor (reply/quote variant with insert + copy buttons) |
+| `components/ideas-view.tsx` | — | Ideas tab UI: list, inline edit, filter by status, delete confirm, export .md |
+| `components/idea-editor.tsx` | — | Single idea inline editor with blur-autosave |
+| `components/idea-row.tsx` | — | Idea list row: status select, delete button, open post link |
 | `components/ui/button.tsx` | — | shadcn/ui Button (generated) |
 | `components/ui/input.tsx` | — | shadcn/ui Input (generated) |
 | `components/ui/label.tsx` | — | shadcn/ui Label (generated) |
@@ -30,8 +33,8 @@ One-line description per source file.
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `lib/types.ts` | 77 | Zod schemas: Tweet, Triage, Settings, TriageError; type exports |
-| `lib/messages.ts` | 28 | Content message schemas (triage, get-prefs, open-panel); TriageResponse type |
+| `lib/types.ts` | 120+ | Zod schemas: Tweet, Triage, Settings, Draft, IdeaDraft, Idea; type exports; X_STATUS_URL validation |
+| `lib/messages.ts` | 37 | Content message schemas (triage, get-prefs, open-panel with kind); TriageResponse, PendingAction, InsertMode types |
 
 ### Storage & Draft Session
 
@@ -57,7 +60,15 @@ One-line description per source file.
 | `lib/draft-safety-checks.ts` | 60+ | Check for unknown links/handles, bait patterns, text length before insert; confirm if risky |
 | `lib/x-composer.ts` | 180+ | Insert draft into x.com composer: dialog scope, target verification, focus check, execCommand + paste fallback, post-button check |
 | `lib/panel-to-tab.ts` | 40+ | Send insert message from side panel to content script; handle result codes; clipboard fallback logic |
-| `lib/ai-models.ts` | 20+ | Resolve draft model (gpt-5.6-terra or settings override); check API key presence |
+| `lib/ai-models.ts` | 20+ | Resolve draft model (gpt-5.6-terra or settings override); check API key presence; shared assertSendable for draft/idea safety |
+
+### Ideas & Markdown Export (Phase 3)
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `lib/ideas-store.ts` | 43 | Load/save `local:ideas` array; promise-chain mutex prevents concurrent write loss; dedupe by sourceStatusId |
+| `lib/idea-expander.ts` | — | Expand truncated ideas via OpenAI with ideaLanguage setting (default 'vi'); parse IdeaDraft fields |
+| `lib/ideas-markdown-export.ts` | — | Export ideas to Markdown: grouped by status, task lists, fenced source, safe link filtering (x.com + projects only) |
 
 ### Tweet Parsing
 
@@ -74,12 +85,13 @@ One-line description per source file.
 | `lib/tweet-badge.ts` | 91 | Render badge UI (loading/ready/error); attach click handlers for draft/idea/debug |
 | `lib/visibility-gate.ts` | 51 | IntersectionObserver with 400ms dwell and multi-threshold logic for visibility detection |
 
-### React Hooks (Phase 2)
+### React Hooks (Phase 2+)
 
 | File | Lines | Purpose |
 |------|-------|---------|
 | `hooks/use-pending-action.ts` | — | Poll session:pendingAction; extract tweet + triage context; nonce check for staleness |
 | `hooks/use-draft-session.ts` | — | Manage draft state: variants, edits, insertion status; queue new tweets while editing |
+| `hooks/use-idea-capture.ts` | — | Expand idea via lib/idea-expander.ts; dedupe by statusId; manage idea form state |
 
 ### Utilities
 
@@ -108,6 +120,8 @@ One-line description per source file.
 | `tests/settings-recovery.test.ts` | Field recovery: keep valid fields when one is corrupted |
 | `tests/tweet-badge.test.ts` | Badge rendering and state transitions |
 | `tests/visibility-and-routes.test.ts` | Visibility gate logic and X route allowlist |
+| `tests/idea-capture.test.ts` | Idea expansion, deduping, form state management |
+| `tests/ideas-export-and-store.test.ts` | Ideas store mutations, Markdown export (grouped by status, safe links) |
 
 ## Configuration
 

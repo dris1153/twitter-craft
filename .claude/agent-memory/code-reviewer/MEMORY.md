@@ -1,2 +1,3 @@
 - [Research reports unreliable](project-research-reports-unreliable.md) — twitter-craft research had wrong X DOM/Jev/WXT claims; fact-check before accepting
 - [Jev SDK shapes + retry gotcha](jev-api-shape-differences.md) — verified evaluate answer shapes; SDK retry+abort hides 429 from queue pause
+- [Host-level link allowlists](host-level-link-allowlists.md) — hostOf() allowlists trust all of github.com; how to render-test Markdown export

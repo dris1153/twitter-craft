@@ -1,6 +1,6 @@
 # twitter-craft
 
-Personal Chrome MV3 extension for x.com. Triages visible tweets using Jev (TypeSafe System One model), shows badge with priority/action, and side panel (React + Tailwind v4 + shadcn/ui) for settings. GPT drafts replies/quotes (phase 2). No backend; keys local only.
+Personal Chrome MV3 extension for x.com. Triages visible tweets using Jev (TypeSafe System One model), shows badge with priority/action, and side panel (React + Tailwind v4 + shadcn/ui) for settings and drafting. GPT drafts replies/quotes with localized tone (reaction/question/take angles). Captures ideas → export Markdown. No backend; keys local only.
 
 ## Setup
 
@@ -67,9 +67,10 @@ pnpm test              # Run test suite
 - **Side panel** (`entrypoints/sidepanel/`): Settings, Draft tab (GPT-generated replies/quotes), compose insert
 - **Storage:**
   - `local:settings` — API keys, interests, projects, voice samples, banned phrases (TRUSTED_CONTEXTS only)
+  - `local:ideas` — Persisted ideas (title, problem, insight, mvpScope, stack, promo, tags, status)
   - `session:triage:{hash}:{id}` — Cached Jev answers per session
   - `session:triagePausedUntil` — Rate-limit pause timestamp
-  - `session:pendingAction` — Draft action (nonce, at, windowId, tabId, tweet, triage) awaiting side panel
+  - `session:pendingAction` — Draft/idea action (nonce, at, windowId, tabId, kind, tweet, triage) awaiting side panel
 
 See [System Architecture](./docs/system-architecture.md) for detailed contexts and message flow.
 
@@ -92,7 +93,7 @@ Tests use `vitest` + `happy-dom`. Fixtures in `tests/fixtures/` are hand-written
 
 ## Troubleshooting
 
-**Badge not showing:** Check min quality threshold; 40 is default. Idea badges always show if buildIdea ≥ 0.6.
+**Badge not showing:** Check min quality threshold; 40 is default. Idea badges (kind=idea) always show if buildIdea ≥ 0.6.
 **"Copy HTML" button missing:** Enable Debug in settings
 **Triage errors "rate_limited":** Wait 30s, extension auto-retries. Queue pauses at 429/529 response.
 **Draft fails or times out:** Check OpenAI API key in Settings. Draft generation timeout: 30s. Model must be in API account.
