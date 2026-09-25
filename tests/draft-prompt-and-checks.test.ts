@@ -30,13 +30,21 @@ describe('replyLanguage', () => {
 describe('draft prompt', () => {
   it('keeps trusted user context in instructions and the post out of them', () => {
     const text = buildInstructions(settings, 'en');
-    expect(text).toContain('Write in English.');
+    expect(text).toContain('Write in English,');
     expect(text).toContain('Backend engineer building agent tooling.');
     expect(text).toContain('<sample>ship it, then measure</sample>');
     expect(text).toContain('"Game changer"');
     expect(text).toContain('evalkit: agent evals');
     expect(text).not.toContain('evalkit.dev'); // no links offered to the model
     expect(text).not.toContain('Ignore previous instructions');
+  });
+
+  it('asks for short, casual replies with casual angles', () => {
+    const text = buildInstructions(settings, 'vi');
+    expect(text).toContain('Write in Vietnamese');
+    expect(text).toMatch(/Match the post's length and energy/);
+    expect(text).toMatch(/"reaction".*"question".*"take"/s);
+    expect(text).toMatch(/Avoid AI tells/);
   });
 
   it('sends the post as JSON data plus images', () => {

@@ -8,17 +8,16 @@ import type { Project, Triage, Tweet } from '@/lib/types';
 
 type Props = {
   variant: Variant;
-  mode: InsertMode;
   ctx: { tweet: Tweet; triage: Triage | null; projects: Project[]; maxChars: number };
   busy: boolean;
   onChange: (text: string) => void;
-  onInsert: () => void;
+  onInsert: (mode: InsertMode) => void;
   onCopy: () => void;
   onSaveSample: () => void;
 };
 
-export function DraftVariantEditor({ variant, mode, ctx, busy, onChange, onInsert, onCopy, onSaveSample }: Props) {
-  const [confirming, setConfirming] = useState(false);
+export function DraftVariantEditor({ variant, ctx, busy, onChange, onInsert, onCopy, onSaveSample }: Props) {
+  const [confirming, setConfirming] = useState<InsertMode | null>(null);
   const [saved, setSaved] = useState(false);
   const warnings = checkDraft(variant.text, ctx);
   const length = [...variant.text].length;
@@ -26,15 +25,26 @@ export function DraftVariantEditor({ variant, mode, ctx, busy, onChange, onInser
   // Untouched model text could carry the stranger's influence into future instructions; require a human edit.
   const canSave = variant.inserted && !saved && !empty && variant.text.trim() !== variant.original.trim();
 
-  const insert = () => {
-    // Warnings (planted links, unknown @handles, bait) need a second, deliberate click.
-    if (warnings.length > 0 && !confirming) {
-      setConfirming(true);
+  const insert = (mode: InsertMode) => {
+    // Warnings (planted links, unknown @handles, bait) need a second, deliberate click on the same button.
+    if (warnings.length > 0 && confirming !== mode) {
+      setConfirming(mode);
       return;
     }
-    setConfirming(false);
-    onInsert();
+    setConfirming(null);
+    onInsert(mode);
   };
+
+  const insertButton = (mode: InsertMode, label: string) => (
+    <Button
+      size="sm"
+      disabled={empty || busy}
+      variant={confirming === mode ? 'destructive' : mode === 'reply' ? 'default' : 'secondary'}
+      onClick={() => insert(mode)}
+    >
+      {confirming === mode ? `${label} anyway` : label}
+    </Button>
+  );
 
   return (
     <div className="space-y-2 rounded-lg border p-3">
@@ -48,7 +58,7 @@ export function DraftVariantEditor({ variant, mode, ctx, busy, onChange, onInser
         rows={3}
         value={variant.text}
         onChange={(e) => {
-          setConfirming(false);
+          setConfirming(null);
           setSaved(false);
           onChange(e.target.value);
         }}
@@ -61,9 +71,8 @@ export function DraftVariantEditor({ variant, mode, ctx, busy, onChange, onInser
         </ul>
       )}
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" disabled={empty || busy} variant={confirming ? 'destructive' : 'default'} onClick={insert}>
-          {confirming ? 'Insert anyway' : mode === 'reply' ? 'Insert as reply' : 'Insert as quote'}
-        </Button>
+        {insertButton('reply', 'Reply')}
+        {insertButton('quote', 'Quote')}
         <Button size="sm" variant="outline" disabled={empty} onClick={onCopy}>
           Copy
         </Button>

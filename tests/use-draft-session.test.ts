@@ -45,7 +45,7 @@ describe('useDraftSession', () => {
     await settingsItem.setValue(SettingsSchema.parse({ openaiKey: 'test' }));
     mockGenerateDraft.mockResolvedValue({
       skipReason: null,
-      replies: [{ angle: 'insight', text: 'Nice point' }],
+      replies: [{ angle: 'reaction', text: 'Nice point' }],
       quote: null,
     });
   });

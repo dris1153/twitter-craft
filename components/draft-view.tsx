@@ -47,18 +47,17 @@ export function DraftView({ session, queued, acceptQueued, dismissQueued, regene
     regenerate();
   };
 
-  const editor = (key: VariantKey, mode: InsertMode) => {
+  const editor = (key: VariantKey) => {
     const v = key === 'quote' ? s.quote : s.variants[key];
     if (!v) return null;
     return (
       <DraftVariantEditor
         key={key}
         variant={v}
-        mode={mode}
         ctx={ctx}
         busy={inserting}
         onChange={(text) => update(key, { text })}
-        onInsert={() => insert(key, mode, v.text)}
+        onInsert={(mode) => insert(key, mode, v.text)}
         onCopy={() => {
           copy(v.text);
           update(key, { inserted: true }, s.tweet.id);
@@ -94,11 +93,11 @@ export function DraftView({ session, queued, acceptQueued, dismissQueued, regene
         <p className="text-muted-foreground">Nothing worth adding: {s.skipReason}</p>
       )}
 
-      {s.variants.map((_, i) => editor(i, 'reply'))}
+      {s.variants.map((_, i) => editor(i))}
       {s.quote && (
         <div className="space-y-2">
-          <h3 className="text-xs font-semibold">Quote post</h3>
-          {editor('quote', 'quote')}
+          <h3 className="text-xs font-semibold">Suggested quote post</h3>
+          {editor('quote')}
         </div>
       )}
 

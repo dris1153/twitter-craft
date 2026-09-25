@@ -16,10 +16,10 @@ const tweet: Tweet = {
 const draftJson = {
   skipReason: null,
   replies: [
-    { angle: 'insight', text: '  Regressions cluster around tool schemas in my experience  ' },
+    { angle: 'reaction', text: '  Regressions cluster around tool schemas in my experience  ' },
     { angle: 'question', text: 'Do you gate merges on it?' },
-    { angle: 'practical', text: 'Pin the judge model version.' },
-    { angle: 'insight', text: 'extra one the model should not have sent' },
+    { angle: 'take', text: 'Pin the judge model version.' },
+    { angle: 'reaction', text: 'extra one the model should not have sent' },
   ],
   quote: '',
 };
