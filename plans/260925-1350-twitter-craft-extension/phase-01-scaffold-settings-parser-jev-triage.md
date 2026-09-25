@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Scaffold, settings, parser, Jev triage badges"
-status: in-progress
+status: done
 priority: P1
 effort: "2.5d"
 dependencies: []
@@ -133,7 +133,7 @@ Create:
 7. `tweet-badge.ts`: Shadow DOM host after action bar, marker attribute; stopPropagation for `click`, `pointerdown`, `mousedown`, `mouseup`, `keydown` on host; buttons read the element's CURRENT tweet at click time; send `open-panel` with `triage`.
 8. Background: `messages.ts` zod-validate every message; require `sender.tab?.id` and `sender.url?.startsWith('https://x.com/')`; cap text lengths; `mediaUrls` only `https://pbs.twimg.com/`. `triage-queue.ts`: LIFO stack, sem 4, in-flight dedupe, `pausedUntil` global, no error caching.
 9. Calibration: scroll ~100 tweets, compare ranking vs own judgment, tweak criteria wording. Debug toggle logs `{id, answers}`.
-10. `npm run compile` + `npm test` green. Load unpacked `.output/chrome-mv3`.
+10. `pnpm compile` + `pnpm test` green. Load unpacked `.output/chrome-mv3`.
 
 ## Todo List
 
@@ -144,7 +144,7 @@ Create:
 - [x] Content observers + ctx cleanup + badge
 - [x] Message validation + triage queue + Jev client + mapping tests
 - [x] Priority at render + tests
-- [ ] Calibrate on 100 tweets
+- [x] Calibrate on 100 tweets
 - [x] Compile + tests green
 
 ## Success Criteria

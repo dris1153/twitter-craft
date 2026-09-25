@@ -198,9 +198,9 @@ console.log('[twitter-craft] triage', url, result);
 **Verify before commit:**
 
 ```bash
-npm run compile   # tsc --noEmit (no errors)
-npm test          # All tests pass
-npm run build     # Produces .output/chrome-mv3/
+pnpm compile   # tsc --noEmit (no errors)
+pnpm test          # All tests pass
+pnpm build     # Produces .output/chrome-mv3/
 ```
 
 ## TypeScript

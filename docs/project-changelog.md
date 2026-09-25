@@ -1,8 +1,66 @@
 # Project Changelog
 
+## 0.2.0 (2026-09-25)
+
+**Phase 2: GPT Draft + Composer Insert — In Progress (Code Complete, Live Test Pending)**
+
+### Completed
+
+**Triage Calibration (Refactored)**
+- Quality score from Jev's probability distribution with convex weights [0, 0.1, 0.45, 0.85, 1] to sink bait, lift substantive posts
+- Priority formula: 0.75·quality + 0.25·replyOpening + freshnessBonus(+0.1 <1h, +0.05 <6h) + hotBonus(+0.05 if likes/min > 5)
+- Computed at render time (not cached) so freshness decays; Jev answers stay valid
+- Debug mode logs raw Jev answers + confidence scores for calibration tuning
+
+**Parser Enhancements**
+- `originalLang` derived from X's auto-translate label ("Được dịch từ Tiếng Nhật" → "ja")
+- Translated posts carry lang="vi" from X; `originalLang` recovers source language
+- Exact metric counts from aria-label (starts with number); fallback to visible text
+- Fixture: `tests/fixtures/translated-quote.html` with real X capture
+
+**Idea Worthiness**
+- `isIdeaWorthy` checks buildIdea ≥ 0.6 and botInstructions ≤ 0.5
+- Idea tweets never dimmed (≥0.6 build_idea always shown even below min quality threshold)
+- Prompt clarified: sharing prompts is normal content (not bait)
+
+**Phase 2: GPT Draft + Composer Insert**
+- Side panel "Draft" tab: generates replies/quotes via GPT when badge is clicked
+- Session:pendingAction flow: {nonce, at, windowId, tabId} written by SW, read by side panel
+- Draft generation (lib/draft-generator.ts):
+  - AI SDK 7 `generateText` with `Output.object` and `DraftSchema`
+  - OpenAI (gpt-5.6-terra default), store:false, maxRetries 0, 30s timeout
+  - Refuses protected/promoted/ad posts (same as Jev)
+- Composer insert (lib/x-composer.ts):
+  - Dialog-scoped lookup: ensures reply/quote targets correct tweet
+  - Focus check + `execCommand('insertText')`, fallback to `paste` (Draft.js newline handling)
+  - Target verification: href match or @handle boundary regex
+  - Post button enabled check; never clicks Post
+- Draft safety (lib/draft-safety-checks.ts):
+  - Detect unknown links/handles, bait language, text too long
+  - Confirm before insert if risky
+- Voice samples grow via "Save as voice sample" button (only after user edits draft)
+- Reply language = `originalLang` if readable (en/vi) else English
+- Prompt: trusted user context only in `instructions` field; post as JSON user message
+
+**Testing**
+- Phase 2 integration tests added (draft generation + insertion flow)
+- Fixture: `tests/fixtures/translated-quote.html` for parser tests
+
+### Known Issues / Open Items
+
+**Phase 2 Live Spike**
+- [ ] Composer multi-line handling on live x.com (Draft.js paste behavior)
+- [ ] Voice sample accumulation over real sessions
+
+**Phase 2 → Phase 3 Blockers**
+- Draft generation calibrated on real usage
+- Composer insert proven reliable on multiple chrome versions
+
+---
+
 ## 0.1.0 (2026-09-25)
 
-**Phase 1: Scaffold, Settings, Parser, Jev Triage Badges — In Progress**
+**Phase 1: Scaffold, Settings, Parser, Jev Triage Badges — Complete**
 
 ### Completed
 
@@ -139,7 +197,7 @@
 - **Tests:** 122 passing (13 files)
 - **Type coverage:** 100% (TypeScript strict, no `any`)
 - **Fixture sources:** Hand-written from Vietnamese X UI
-- **Build:** `npm run build` produces `.output/chrome-mv3/`
+- **Build:** `pnpm build` produces `.output/chrome-mv3/`
 - **Bundle:** ~400 KB (extension minified)
 - **Estimated triage cost:** $0.10/day at typical usage (4 concurrent, 20 queued)
 

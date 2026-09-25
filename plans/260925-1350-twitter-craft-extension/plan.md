@@ -24,8 +24,8 @@ Research: [WXT + AI SDK in MV3](./research/researcher-01-wxt-ai-sdk-mv3-report.m
 
 | Phase | Name | Status | Effort |
 |-------|------|--------|--------|
-| 1 | [Scaffold, settings, parser, Jev triage badges](./phase-01-scaffold-settings-parser-jev-triage.md) | In progress (code done, live spikes pending) | 2.5d |
-| 2 | [GPT draft + composer insert](./phase-02-gpt-draft-and-composer-insert.md) | Pending | 2d |
+| 1 | [Scaffold, settings, parser, Jev triage badges](./phase-01-scaffold-settings-parser-jev-triage.md) | Done (live verified) | 2.5d |
+| 2 | [GPT draft + composer insert](./phase-02-gpt-draft-and-composer-insert.md) | In progress (code done, live test pending) | 2d |
 | 3 | [Ideas/TODO + Markdown export](./phase-03-ideas-todo-and-markdown-export.md) | Pending | 0.5d |
 | 4 | [Card PNG + GIF suggestion](./phase-04-card-png-and-gif-suggestion.md) | Pending | 1d |
 
@@ -46,7 +46,7 @@ Sequential: each phase depends on the previous one.
 ## Dependencies
 
 - Jev API key (user has one), OpenAI API key.
-- Node 20+, npm, Chrome 116+ (Chrome only).
+- Node 20+, pnpm, Chrome 116+ (Chrome only).
 - X UI language Vietnamese: locale-agnostic selectors first, `vi` + `en` keyword table for the rest.
 - Side panel: Tailwind v4 + shadcn/ui.
 
@@ -56,7 +56,7 @@ Sequential: each phase depends on the previous one.
 - Draft → edit → Insert → Post in ≤ 3 clicks; Post button enabled after insert.
 - Ideas persist, export valid Markdown.
 - Triage cost ≤ $0.10/day at normal usage.
-- `npm run compile` + `npm test` pass.
+- `pnpm compile` + `pnpm test` pass.
 
 ## Red Team Review
 

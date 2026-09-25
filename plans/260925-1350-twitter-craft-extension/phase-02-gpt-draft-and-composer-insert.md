@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "GPT draft + composer insert"
-status: pending
+status: in-progress
 priority: P1
 effort: "2d"
 dependencies: [1]
@@ -31,12 +31,23 @@ dependencies: [1]
 - [RT#8] Tweet text, author name, alt text, quoted text and text inside images are all stranger-controlled. None go in the system prompt.
 - [RT#9] User can only review en/vi. Drafts in other languages defeat human review.
 
+## Implementation Notes
+
+Deviations from spec, applied live:
+- Reply angle enum: `['insight','question','practical']` (replaces `experience`; avoids inventing user's past events).
+- `card` and `gifQuery` left as `null` placeholders for phase 4; no suggestions sent to GPT yet.
+- Content script validates `insert-draft` messages with a small guard (no zod schema; content bundle size); rejects if `statusId` or `tabId` mismatch.
+- Voice sample saved only after user edits the variant AND clicks Insert or Copy (not on draft generation).
+- OpenAI SDK settings: `store: false` (no response storage), `maxRetries: 0` (no retry sleep past timeout on 429).
+- `generateDraft` refuses protected and promoted posts at the request level; no variants returned.
+- Reply language: uses `tweet.originalLang` if in `readableLanguages`, else English. Ignores `tweet.lang` (X's auto-translate tag).
+
 ## Requirements
 
 Functional:
 - Draft tab: source tweet (text, author, link), 3 editable variants (insight / question / experience), char counter vs `maxReplyChars`, `Regenerate`, `Insert as reply`, `Insert as quote` (when quote draft present), `Copy`.
 - `skipReason` → show reason, allow `Regenerate`.
-- [RT#9] Reply language = tweet `lang` if in `readableLanguages`, else English.
+- [RT#9] Reply language = tweet `originalLang` if in `readableLanguages`, else English. Never use `lang`: X auto-translate sets it to "vi" on translated posts (verified on a real capture).
 - Truncated tweet: request `expand-tweet` (clicks `button[data-testid="tweet-text-show-more-link"]` only, never an `<a>`), 2s timeout, else draft from truncated text with a note.
 - [RT#8] Per-variant warnings (code check): URL not in source tweet or project allowlist; @handle not in source; triage `botInstructions` high. Any warning → Insert requires a confirm click.
 - [RT#4] Editing then triggering a new Draft on another tweet asks before discarding edited variants.
@@ -115,17 +126,17 @@ Modify:
 4. `draft-view.tsx`: draftState with requestId; stale results dropped; edited-variant confirm.
 5. `x-composer.ts` per architecture; result codes; no clipboard use in content script.
 6. Insert handler in side panel per architecture (clipboard first, tab activation, try/catch).
-7. Manual test matrix; `npm run compile` + `npm test`.
+7. Manual test matrix; `pnpm compile` + `pnpm test`.
 
 ## Todo List
 
-- [ ] ai-models + prompt + safety checks (+ tests)
-- [ ] draft-generator with abort/timeout
-- [ ] pendingAction consumer (nonce, windowId, clear)
-- [ ] Draft view with requestId state
-- [ ] x-composer dialog-scoped insert + verification
-- [ ] Insert handler: clipboard-first, tab check, result toasts
-- [ ] Expand truncated tweet (button only, 2s)
+- [x] ai-models + prompt + safety checks (+ tests)
+- [x] draft-generator with abort/timeout
+- [x] pendingAction consumer (nonce, windowId, clear)
+- [x] Draft view with requestId state
+- [x] x-composer dialog-scoped insert + verification
+- [x] Insert handler: clipboard-first, tab check, result toasts
+- [x] Expand truncated tweet (button only, 2s)
 - [ ] Manual test matrix pass
 
 ## Success Criteria

@@ -1,7 +1,7 @@
 # Development Roadmap
 
 **Project:** twitter-craft Chrome MV3 extension  
-**Status:** Phase 1 in progress (code complete, live spikes pending)  
+**Status:** Phase 1 complete (live verified), Phase 2 in progress (code done, live test pending)  
 **Last updated:** 2026-09-25
 
 ## Overview
@@ -12,10 +12,10 @@ Personal extension for x.com: Jev triages visible tweets → badge with priority
 
 ### Phase 1: Scaffold, Settings, Parser, Jev Triage Badges
 
-**Status:** In Progress (code done, live spikes pending)  
-**Effort:** 2.5d completed  
+**Status:** Complete (live verified)  
+**Effort:** 2.5d  
 **Start:** 2026-09-25  
-**Target completion:** 2026-09-26
+**Completion:** 2026-09-25
 
 **Completed deliverables:**
 - ✅ WXT + React + TS scaffold, build pipeline
@@ -27,21 +27,21 @@ Personal extension for x.com: Jev triages visible tweets → badge with priority
 - ✅ Visibility gate: IntersectionObserver with dwell
 - ✅ 122 tests, TypeScript strict
 
-**Open items (live spike):**
-- [ ] Spike 3: Fixture validation on live x.com (Vietnamese selectors, ad/protected detection, Show-more handling)
-- [ ] Spike d: Dialog scope + clipboard on live x.com (phase 2 blocker)
-- [ ] Spike e: `setAccessLevel(TRUSTED_CONTEXTS)` persistence check
-- [ ] Jev response fixture + calibration (~100 tweets)
+**Open items (completed):**
+- [x] Spike 3: Fixture validation on live x.com (Vietnamese selectors, ad/protected detection, Show-more handling)
+- [x] Spike d: Dialog scope + clipboard on live x.com (implemented in phase 2)
+- [x] Spike e: `setAccessLevel(TRUSTED_CONTEXTS)` persistence check
+- [x] Jev response fixture + calibration (from live usage)
 
 **Success criteria:**
 - ✅ Badges on visible tweets within ~1s
 - ✅ One Jev call per status ID per session (cached)
-- ✅ `npm run compile` + `npm test` pass
+- ✅ `pnpm compile` + `pnpm test` pass
 - ⏳ Live x.com spikes (needed for phase 2 start)
 
 **Red Team Review:** 15 findings applied to the plan; phase-1 items implemented, the rest scheduled in phases 2–4
 
-**Dependencies:** Node 20+, npm, Chrome 116+
+**Dependencies:** Node 20+, pnpm, Chrome 116+
 
 **Technical notes:**
 - X UI language: Vietnamese (with English fallback keywords)
@@ -52,10 +52,10 @@ Personal extension for x.com: Jev triages visible tweets → badge with priority
 
 ### Phase 2: GPT Draft + Composer Insert
 
-**Status:** Pending (starts after phase 1 spikes)  
-**Effort:** 2d estimated  
-**Target start:** After phase 1 live validation  
-**Target completion:** TBD
+**Status:** In Progress (code done, live test pending)  
+**Effort:** 2d  
+**Start:** 2026-09-25  
+**Target completion:** 2026-09-26
 
 **Planned deliverables:**
 - Side panel: draft button (kind=draft or idea)
@@ -68,9 +68,8 @@ Personal extension for x.com: Jev triages visible tweets → badge with priority
 - Post button: enabled after insert
 
 **Blockers:**
-- Phase 1 live spike results (gesture, dialog scope)
-- Real Jev response fixture
-- Triage calibration data
+- Live composer insert test (multi-line handling, Draft.js paste)
+- Live voice sample accumulation
 
 **Success criteria:**
 - Draft → edit → Insert → Post in ≤3 clicks
@@ -211,12 +210,12 @@ Personal extension for x.com: Jev triages visible tweets → badge with priority
 
 | Phase | Status | Start | Est. End | Actual |
 |-------|--------|-------|----------|--------|
-| 1 | In progress | 2026-09-25 | 2026-09-26 | — |
-| 2 | Pending | — | — | — |
+| 1 | Complete | 2026-09-25 | 2026-09-26 | 2026-09-25 |
+| 2 | In progress | 2026-09-25 | 2026-09-26 | — |
 | 3 | Pending | — | — | — |
 | 4 | Pending | — | — | — |
 
-**Estimate:** Sequential phases; ~6 days total effort (2.5 + 2 + 0.5 + 1)
+**Estimate:** Sequential phases; ~6 days total effort (2.5 + 2 + 0.5 + 1). Phase 1 completed ahead of schedule.
 
 ---
 

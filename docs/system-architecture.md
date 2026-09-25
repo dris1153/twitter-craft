@@ -12,6 +12,8 @@ Three execution contexts with distinct trust and capability boundaries:
 
 ## Message Flow
 
+### Triage Path
+
 ```
 Content Script (x.com)
   ├─ Parse tweet from DOM
@@ -32,19 +34,53 @@ Content Script
   ├─ Compute priority from triage + tweet metrics
   ├─ Render badge with priority score
   └─ On badge click: Send { type: 'open-panel', kind, tweet, triage }
+```
 
+### Draft Path (Phase 2)
+
+```
 Background SW
-  ├─ Receive 'open-panel'
+  ├─ Receive 'open-panel' from content script
   ├─ Call sidePanel.open({ tabId })  ← must run before any await
-  ├─ Store pendingAction in session:pendingAction
+  ├─ Store pendingAction: { nonce, at, windowId, tabId, tweet, triage, kind } in session:pendingAction
   └─ Send response immediately
 
 Side Panel
-  ├─ Poll pendingActionItem for action
-  ├─ Load tweet context (nonce check)
-  ├─ Future: Call GPT for draft
-  ├─ Insert text into x.com composer
-  └─ User clicks Post on x.com
+  ├─ Mount: hooks/use-pending-action.ts polls session:pendingAction
+  ├─ Fetch tweet + triage context via nonce (re-verify not stale)
+  ├─ Show "Draft" tab (Draft tab is active if kind='draft')
+  ├─ User clicks "Draft" button → triggers Draft action
+  ├─ Side panel calls lib/draft-generator.ts:
+  │   ├─ Check: !isProtected && !isAd
+  │   ├─ Call OpenAI generateText with instructions + userMessage
+  │   ├─ Parse Output.object response (DraftSchema)
+  │   ├─ Timeout 30s, store:false, maxRetries:0
+  │   └─ Return: { replies: [], quote: null, skipReason?: string }
+  ├─ User edits draft text (hooks/use-draft-session.ts tracks edits)
+  ├─ User clicks "Insert"
+  │   ├─ Side panel copies text to clipboard (user gesture preserved)
+  │   ├─ Call insertIntoTab via panel-to-tab.ts (content script method)
+  │   └─ Content script calls lib/x-composer.ts:insertDraft()
+  ├─ Content script (lib/x-composer.ts):
+  │   ├─ Find article by statusId (top-level only, exact match)
+  │   ├─ Target verification: href match or @handle boundary regex
+  │   ├─ Open reply/quote dialog (calls X's own UI)
+  │   ├─ Focus composer, typeInto() with execCommand('insertText')
+  │   ├─ If newline drops: clear + paste (Draft.js handling)
+  │   ├─ Check post button enabled
+  │   ├─ Return: 'inserted' | 'dialog_open' | 'not_found' | ...
+  │   └─ Never clicks Post
+  ├─ Side panel shows result: "Inserted." or error message
+  ├─ If successful and user edited: offer "Save as voice sample"
+  └─ User clicks Post on x.com (manual)
+
+Draft Safety (Phase 2)
+  ├─ lib/draft-safety-checks.ts before insert:
+  │   ├─ Detect unknown links (not x.com links)
+  │   ├─ Detect unknown handles (not in original tweet)
+  │   ├─ Detect bait patterns (common engagement tricks)
+  │   ├─ Check text length against maxReplyChars
+  │   └─ If risky: confirm before insert
 ```
 
 ## Trust Boundary: Content Script → Background
@@ -89,15 +125,27 @@ Manages concurrent API calls and rate limiting:
 
 **Content script cannot read `local:settings`** — background SW sanitizes and sends only `DisplayPrefs` (`minQuality`, `dimLowScore`, `debug`).
 
-## X DOM Selectors
+## Tweet Parsing & Language Detection
 
-**Single source:** `lib/x-dom-selectors.ts`
+**Tweet Parser:** `lib/tweet-parser.ts`
+
+Extracts from X's DOM:
+- Text, author, metrics (replies/reposts/likes/views from aria-label for exact counts)
+- Original language (`originalLang`) from X's auto-translate label ("Được dịch từ Tiếng Nhật" → "ja")
+- Translated posts carry lang="vi" from X's rendering; `originalLang` recovers the source
+- Quoted posts, media, protected account status, ads
+
+**X DOM Selectors:** `lib/x-dom-selectors.ts`
 
 All queries use data-testid or role selectors (locale-agnostic). When X DOM changes, update this file only.
 
 **Locale keywords:** `lib/x-locale-keywords.ts`
 
-Holds language-specific keywords (e.g., Vietnamese "Ads", "Protected account" labels). Used by `tweet-parser.ts` to detect ads and protected status via text fallbacks.
+Holds language-specific keywords (en, vi):
+- Ad detection: "Quảng cáo" (vi), "Ad" (en)
+- Protected account: "Tài khoản được bảo vệ" (vi), "Protected account" (en)
+- Auto-translate label prefix: "Được dịch từ" (vi), "Translated from" (en)
+- Language code mapping: Vietnamese/Tiếng Việt → "vi", English/Tiếng Anh → "en", etc.
 
 ## Visibility Gate
 
@@ -117,6 +165,24 @@ Holds language-specific keywords (e.g., Vietnamese "Ads", "Protected account" la
 - `loading` — Call in flight
 - `ready` — Success; shows priority score (0–100)
 - `error` — {reason}; Errors: `invalid` (ad/protected), `no_key`, `rate_limited`, `http`, `dropped`
+- **Idea badge:** Rendered if `isIdeaWorthy` (buildIdea ≥ 0.6, botInstructions ≤ 0.5); never dimmed below quality threshold
+
+**Priority Computation (cached at render time, not storage):**
+```
+score = 0.75 * triage.quality 
+      + 0.25 * triage.replyOpening 
+      + freshnessBonus(ageMinutes)
+      + hotBonus(likes/min)
+
+freshnessBonus: +0.1 if <60min, +0.05 if <6h, else 0
+hotBonus: +0.05 if likes/minute > 5, else 0
+priority: round(100 * clamp(score, 0, 1))
+```
+
+**Triage Quality Score (from Jev):**
+- Extracted from probability distribution using convex weights [0, 0.1, 0.45, 0.85, 1]
+- Sinks spam/bait (low levels), lifts substantive posts (high levels)
+- Debug mode logs raw Jev answers + confidence scores
 
 **Click handlers (phase 2+):**
 - `onDraft` — Open side panel with kind='draft'
