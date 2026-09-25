@@ -89,14 +89,14 @@ Draft Safety (Phase 2)
   │   ├─ normalizeCard(): trim, limit bullets/code/rows, drop if empty
   │   └─ No card/GIF when draft is skipped
   ├─ Card UI (side panel):
-  │   ├─ CardPanel: attach toggle (starts unchecked), dark/light theme, edit button
-  │   ├─ Preview = actual PNG (off-screen ShareCard, pixelRatio 2 → 1200px)
+  │   ├─ CardPanel: attach toggle (starts unchecked), edit button, Copy image button
+  │   ├─ Preview = actual PNG (off-screen ShareCard, pixelRatio 2 → 1200px, renders light DESIGN.md style)
   │   ├─ CardEditor: inline title/bullets/code/rows with live validation
   │   ├─ Copy image: separate gesture, clipboard item (image/png)
   │   └─ Warnings shown if card has unknown links/handles
   ├─ Card rendering (lib/card-to-png.ts):
   │   ├─ html-to-image: toBlob + getFontEmbedCSS
-  │   ├─ woff2 font embed cached per kind (assets/card-fonts.css)
+  │   ├─ woff2 font embed cached per kind (assets/ui-fonts.css with JetBrains Mono 400/500/600 + Inter 400/600/700)
   │   ├─ 5s timeout, 3MB size cap
   │   └─ CardRenderState: pending/ready/failed
   ├─ Card attachment (lib/card-attach.ts):

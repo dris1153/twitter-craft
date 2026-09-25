@@ -117,9 +117,9 @@ Personal extension for x.com: Jev triages visible tweets → badge with priority
 - Card schema: flat object (kind/title/bullets/code/columns/rows), all keys required for OpenAI strict mode
 - Three card kinds: insight (bullets), code (code block), compare (2-column table)
 - Draft generation: normalizeCard() trims/limits, retry once without card on NoObjectGeneratedError
-- Card UI: side panel toggle, dark/light theme, inline editor, Copy image button
+- Card UI: side panel attach toggle, inline editor, Copy image button; card PNG renders single light DESIGN.md style
 - PNG export: html-to-image with woff2 font embed cached per kind, 5s timeout, 3MB cap
-- Card fonts: bundled Inter 400/700 + JetBrains Mono (latin+latin-ext+vietnamese unicode-range)
+- Card fonts: bundled JetBrains Mono 400/500/600 + Inter 400/600/700 (latin+latin-ext+vietnamese unicode-range) in assets/ui-fonts.css
 - Card attachment: cardImageFor() logic, auto-untick on failure, wait-for-render logic
 - GIF picker: openGifPicker() calls X's native picker, types query, mutual exclusivity with images
 - Validation: checkCard() checks for unknown links/handles (same safety checks as text)
@@ -127,7 +127,6 @@ Personal extension for x.com: Jev triages visible tweets → badge with priority
 
 **Blockers (for live spike):**
 - Card + GIF sequencing (if both suggested, which posts first)
-- Theme preference persistence
 
 **Success criteria:**
 - Card preview renders and matches actual PNG posted to X

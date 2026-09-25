@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Changed
+- UI redesign (neo-brutalist theme per DESIGN.md): cream paper (#f4efea) background, charcoal ink (#383838) borders/text, sky (#6fc2ff) for primary actions, canary + rainbow palette for accents only. All elements use 2px radius and hard offset shadows (-2px/-4px/-6px) with no blur. Typography: JetBrains Mono for UI, Inter for third-party tweet text. Dark "charcoal paper" theme auto-applied via prefers-color-scheme. Assets: new `assets/ui-fonts.css` (18 @font-face rules for JetBrains Mono 400/500/600 + Inter 400/600/700 with latin/latin-ext/vietnamese unicode-range), `assets/motion.css` (motion tokens and transition classes with prefers-reduced-motion guards). New components: `panel-card.tsx` (accent stripe, Chip, SectionTitle), `segmented-tabs.tsx` (sliding pill), `tweet-embed.tsx`. Removed dark/light theme toggle from card PNG (`components/share-card.tsx`): card now renders single light DESIGN.md style. X badge redesign (`lib/tweet-badge.ts`): compact brutalist chip with colored score tiers (>=70 sky, 40-69 canary, else cream; errors coral). Idea rows now accordion; status select colored per status (new sky, reviewing marigold, doing mint, dropped slate). Settings save error triggers shake animation. Deleted `assets/card-fonts.css` (replaced by shared `assets/ui-fonts.css`).
 - Post pages (`/{handle}/status/{id}`): only the post and its author's own thread are scored. Other people's replies show a "not scored" badge with Draft/Idea and cost no Jev call (`lib/x-routes.ts` `triageMode`). Quote lists (`/status/{id}/quotes`) and all other feeds are scored as before.
 - Badges survive the reply composer and media viewer: those modals change the URL (`/compose/post`, `/status/{id}/photo/1`) but the page underneath stays, so they are treated as overlays (`isOverlayRoute`) instead of navigations.
 
@@ -22,17 +23,17 @@
 - Card schema validation in lib/draft-safety-checks.ts: checkCard() checks for unknown links/handles (same as text drafts)
 
 **Card UI & PNG Export**
-- Side panel: CardPanel component (attach toggle, light/dark theme, edit card, Copy image button)
+- Side panel: CardPanel component (attach toggle, edit card, Copy image button)
 - Preview is the actual rendered PNG (off-screen components/share-card.tsx, pixelRatio 2 → 1200px)
 - PNG generation (lib/card-to-png.ts):
   - html-to-image library (toBlob + getFontEmbedCSS)
-  - woff2 font embed cached per card kind
+  - woff2 font embed cached per kind (shared assets/ui-fonts.css)
   - 5s timeout, 3MB size cap
 - Card editor (components/card-editor.tsx): inline edit title, bullets/code/rows with live preview
-- Share card (components/share-card.tsx): dark/light theme, Inter + JetBrains Mono fonts, 600px wide
+- Share card (components/share-card.tsx): light DESIGN.md style (cream paper + charcoal border + hard shadow), JetBrains Mono, 600px wide
 
 **Font Bundling**
-- assets/card-fonts.css: bundled Inter 400/700 and JetBrains Mono (latin+latin-ext+vietnamese subsets)
+- assets/ui-fonts.css: bundled JetBrains Mono 400/500/600 and Inter 400/600/700 (latin+latin-ext+vietnamese subsets)
 - unicode-range per subset (no remote fonts; extension pages block them, html-to-image can't embed them)
 - Fonts from @fontsource package (woff2 only, keeps embed CSS small)
 
@@ -58,7 +59,6 @@
 ### Known Issues / Open Items
 
 **Phase 4 Live Spike**
-- [ ] Card theme preferences on live x.com (dark/light UX pattern)
 - [ ] Card + GIF order (which posts first if both suggested)
 
 ---

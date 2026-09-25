@@ -18,9 +18,9 @@ One-line description per source file.
 | `components/settings-view.tsx` | 112 | Settings form UI: API keys, triage prefs, voice config; loads/saves to storage |
 | `components/draft-view.tsx` | 110+ | Draft tab UI: display generated drafts, edit variants, insert into composer, save voice samples |
 | `components/draft-variant-editor.tsx` | — | Reusable draft variant editor (reply/quote variant with insert + copy buttons) |
-| `components/card-panel.tsx` | 90 | Card UI: attach toggle, dark/light theme, edit, Copy image; preview is actual PNG from off-screen ShareCard |
+| `components/card-panel.tsx` | 90 | Card UI: attach toggle (unchecked by default), edit card inline, Copy image button, preview renders actual PNG from off-screen ShareCard |
 | `components/card-editor.tsx` | 62 | Inline card editor: title, bullets/code/rows with kind-specific hints, live preview |
-| `components/share-card.tsx` | 67 | Off-screen card render: dark/light theme, Inter + JetBrains Mono, 600px fixed width |
+| `components/share-card.tsx` | 67 | Off-screen card render: light DESIGN.md style (cream paper + charcoal border + hard shadow), JetBrains Mono, 600px fixed width |
 | `components/ideas-view.tsx` | — | Ideas tab UI: list, inline edit, filter by status, delete confirm, export .md |
 | `components/idea-editor.tsx` | — | Single idea inline editor with blur-autosave |
 | `components/idea-row.tsx` | — | Idea list row: status select, delete button, open post link |
@@ -158,7 +158,9 @@ One-line description per source file.
 |------|---------|
 | `public/icon*.png` | Extension icons (16, 48, 128) |
 | `public/twitter-craft.html` | Side panel HTML template (WXT generates from React) |
-| `assets/card-fonts.css` | Bundled card fonts: Inter 400/700 + JetBrains Mono (latin+latin-ext+vietnamese unicode-range) for PNG embedding |
+| `assets/ui-fonts.css` | Bundled UI fonts: JetBrains Mono 400/500/600 + Inter 400/600/700 (latin+latin-ext+vietnamese unicode-range) for side panel and card PNG embedding |
+| `assets/motion.css` | Motion tokens (durations, easings, distances, scales) and transition classes (t-tabs-pill, t-shimmer, etc.) guarded by prefers-reduced-motion |
+| `assets/tailwind.css` | Tailwind v4 config with neo-brutalist design tokens: cream paper (#f4efea), charcoal ink (#383838), sky (#6fc2ff), hard offset shadows (shadow-brut-sm/md/lg), dark theme via prefers-color-scheme |
 
 ## Build Output
 

@@ -4,3 +4,4 @@
 - [Doc sources for fact-checks](reference_doc_sources.md) — where to curl TypeSafe/OpenAI/Chrome docs; which fetch method works
 - [html-to-image + fontsource gotchas](html-to-image-fontsource-gotchas.md) — silent font failure, render hang, no unicode-range; X GIF vs photo exclusivity
 - [X overlay routes keep page mounted](x-overlay-routes-keep-page-mounted.md) — /compose/post + photo modal change pathname; route-keyed resets must ignore them
+- [TW v4 motion gotchas + live CSS probe](tailwind-v4-motion-gotchas-and-live-css-probe.md) — outline-none kills focus ring, translate vs transform, RO snap; CDP headless probe recipe
