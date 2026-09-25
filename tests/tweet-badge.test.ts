@@ -92,6 +92,16 @@ describe('renderBadge', () => {
     expect(shadowOf(article).textContent).not.toContain('💡');
   });
 
+  it('shows replies without a score but with working Draft/Idea buttons', () => {
+    const article = setup();
+    const h = handlers();
+    renderBadge(article, { kind: 'manual' }, h);
+    expect(shadowOf(article).querySelector('.pill')).toBeNull();
+    expect(shadowOf(article).textContent).toContain('not scored');
+    buttonNamed(article, 'Draft')!.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+    expect(h.onDraft).toHaveBeenCalledOnce();
+  });
+
   it('flags bait and uncertainty', () => {
     const article = setup();
     renderBadge(article, { kind: 'ready', priority: 50, triage: { ...triage, uncertain: true, botInstructions: 0.9 } }, handlers());

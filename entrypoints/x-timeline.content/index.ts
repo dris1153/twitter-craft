@@ -7,9 +7,10 @@ import { createVisibilityGate } from '@/lib/visibility-gate';
 import { expandTweet, insertDraft, isPanelMessage } from '@/lib/x-composer';
 import { openGifPicker } from '@/lib/x-composer-media';
 import { BADGE_ATTR, SEL } from '@/lib/x-dom-selectors';
-import { isTriageRoute } from '@/lib/x-routes';
+import { isOverlayRoute, isTriageRoute, routeKey, triageMode } from '@/lib/x-routes';
 
-type Entry = { id: string; tweet: Tweet | null; triage: Triage | null };
+// route: the post page this was evaluated on ('' elsewhere); manual: a reply shown without a score.
+type Entry = { id: string; tweet: Tweet | null; triage: Triage | null; route: string; manual?: boolean };
 
 const RETRY_MS = 15_000;
 
@@ -46,6 +47,14 @@ export default defineContentScript({
       .then((p) => (prefs = p))
       .catch(() => {});
 
+    // The page under any modal. Opening the reply composer or the media viewer changes the URL, but
+    // the page (and its badges) stays; only a real navigation should re-evaluate badges.
+    let pagePath = location.pathname;
+    const currentPage = () => {
+      if (!isOverlayRoute(location.pathname)) pagePath = location.pathname;
+      return pagePath;
+    };
+
     const reset = (article: Element) => {
       entries.delete(article);
       removeBadge(article);
@@ -74,12 +83,21 @@ export default defineContentScript({
     };
 
     async function evaluate(article: Element): Promise<void> {
-      if (ctx.isInvalid || !isTriageRoute(location.pathname)) return;
+      const page = currentPage();
+      if (ctx.isInvalid || isOverlayRoute(location.pathname) || !isTriageRoute(page)) return;
       const tweet = parseTweet(article);
-      if (!tweet || entries.get(article)?.id === tweet.id) return;
-      entries.set(article, { id: tweet.id, tweet, triage: null });
-      if (tweet.isAd || tweet.isProtected || tweet.quoted?.isProtected) {
+      const route = routeKey(page);
+      const known = entries.get(article);
+      if (!tweet || (known?.id === tweet.id && known.route === route)) return;
+      const mode = triageMode(tweet, page);
+      entries.set(article, { id: tweet.id, tweet, triage: null, route, manual: mode === 'manual' });
+      if (mode === 'skip') {
         removeBadge(article);
+        return;
+      }
+      if (mode === 'manual') {
+        setDim(article, false);
+        renderBadge(article, { kind: 'manual' }, handlersFor(article));
         return;
       }
       renderBadge(article, { kind: 'loading' }, handlersFor(article));
@@ -88,13 +106,15 @@ export default defineContentScript({
       try {
         res = await send<TriageResponse>({ type: 'triage', tweet });
       } catch {
-        if (!ctx.isInvalid && entries.get(article)?.id === tweet.id) reset(article);
+        const cur = entries.get(article);
+        if (!ctx.isInvalid && cur?.id === tweet.id && cur.route === route) reset(article);
         return;
       }
-      if (entries.get(article)?.id !== tweet.id) return; // node was recycled while waiting
+      const cur = entries.get(article);
+      if (cur?.id !== tweet.id || cur.route !== route) return; // node recycled or page changed while waiting
       prefs = res.prefs;
       if (res.ok) {
-        entries.set(article, { id: tweet.id, tweet, triage: res.triage });
+        entries.set(article, { id: tweet.id, tweet, triage: res.triage, route });
         renderReady(article, tweet, res.triage);
         return;
       }
@@ -110,6 +130,7 @@ export default defineContentScript({
     const gate = createVisibilityGate((el) => void evaluate(el));
 
     const scan = () => {
+      const route = routeKey(currentPage());
       for (const article of document.querySelectorAll(SEL.tweet)) {
         if (!isTopLevelTweet(article)) continue;
         if (!observed.has(article)) {
@@ -119,12 +140,13 @@ export default defineContentScript({
         }
         const entry = entries.get(article);
         if (!entry) continue;
-        if (quickStatusId(article) !== entry.id) {
+        if (quickStatusId(article) !== entry.id || entry.route !== route) {
           reset(article);
           gate.recheck(article);
-        } else if (entry.tweet && entry.triage && !article.querySelector(`[${BADGE_ATTR}]`)) {
+        } else if (!article.querySelector(`[${BADGE_ATTR}]`)) {
           // X re-rendered the action bar (e.g. after "Show more") and took our badge with it.
-          renderReady(article, entry.tweet, entry.triage);
+          if (entry.tweet && entry.triage) renderReady(article, entry.tweet, entry.triage);
+          else if (entry.manual) renderBadge(article, { kind: 'manual' }, handlersFor(article));
         }
       }
     };

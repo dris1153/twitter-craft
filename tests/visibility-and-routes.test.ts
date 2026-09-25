@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isMostlyVisible } from '@/lib/visibility-gate';
-import { isTriageRoute } from '@/lib/x-routes';
+import { isOverlayRoute, isTriageRoute, routeKey, triageMode } from '@/lib/x-routes';
 
 describe('isMostlyVisible', () => {
   const vh = 800;
@@ -32,4 +32,49 @@ describe('isTriageRoute', () => {
     ['/compose/post', false],
     ['/karpathy/likes', false],
   ])('%s → %s', (path, expected) => expect(isTriageRoute(path)).toBe(expected));
+});
+
+describe('triageMode', () => {
+  const post = { id: '100', authorHandle: 'Karpathy', isAd: false, isProtected: false, quoted: null };
+
+  it('scores every post outside a post page', () => {
+    expect(triageMode({ ...post, id: '5', authorHandle: 'someone' }, '/home')).toBe('triage');
+    expect(triageMode(post, '/karpathy')).toBe('triage');
+  });
+
+  it('on a post page, scores the post and its author thread but not other people replies', () => {
+    const path = '/karpathy/status/100';
+    expect(triageMode(post, path)).toBe('triage');
+    expect(triageMode({ ...post, id: '101' }, path)).toBe('triage'); // thread 2/5 by the author, any handle case
+    expect(triageMode({ ...post, id: '102', authorHandle: 'commenter' }, path)).toBe('manual');
+    expect(triageMode({ ...post, id: '102', authorHandle: 'commenter' }, `${path}/photo/1`)).toBe('manual');
+  });
+
+  it('keeps skipping ads and protected posts everywhere', () => {
+    expect(triageMode({ ...post, isAd: true }, '/karpathy/status/100')).toBe('skip');
+    expect(triageMode({ ...post, quoted: { authorHandle: 'p', text: '', isProtected: true } }, '/home')).toBe('skip');
+  });
+
+  it('routeKey changes with the post being viewed', () => {
+    expect(routeKey('/home')).toBe('');
+    expect(routeKey('/karpathy/status/100')).toBe('100');
+    expect(routeKey('/karpathy/status/100/photo/1')).toBe('100');
+  });
+});
+
+describe('overlay routes', () => {
+  it.each([
+    ['/compose/post', true],
+    ['/karpathy/status/100/photo/1', true],
+    ['/karpathy/status/100/video/1', true],
+    ['/home', false],
+    ['/karpathy/status/100', false],
+    ['/karpathy/status/100/quotes', false],
+  ])('%s → %s', (path, expected) => expect(isOverlayRoute(path)).toBe(expected));
+
+  it('scores quote lists like a feed', () => {
+    const quoter = { id: '7', authorHandle: 'someone', isAd: false, isProtected: false, quoted: null };
+    expect(routeKey('/karpathy/status/100/quotes')).toBe('');
+    expect(triageMode(quoter, '/karpathy/status/100/quotes')).toBe('triage');
+  });
 });

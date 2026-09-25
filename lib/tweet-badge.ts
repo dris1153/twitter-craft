@@ -5,6 +5,7 @@ import { BADGE_ATTR, SEL } from './x-dom-selectors';
 
 export type BadgeState =
   | { kind: 'loading' }
+  | { kind: 'manual' } // a reply on a post's page: no score, Draft/Idea still available
   | { kind: 'ready'; priority: number; triage: Triage }
   | { kind: 'error'; error: TriageError };
 
@@ -63,6 +64,10 @@ function button(label: string, onClick: () => void): HTMLButtonElement {
 
 function content(state: BadgeState, handlers: BadgeHandlers): HTMLElement[] {
   if (state.kind === 'loading') return [span('…')];
+  if (state.kind === 'manual') {
+    const why = "On a post's page only the post and its author's thread are scored";
+    return [span('not scored', '', why), button('Draft', handlers.onDraft), button('Idea', handlers.onIdea)];
+  }
   if (state.kind === 'error') return [span('⚠', 'pill err', ERROR_TEXT[state.error])];
   const { priority, triage: t } = state;
   const tier = priority >= 70 ? 'hi' : priority >= 40 ? 'mid' : 'lo';
