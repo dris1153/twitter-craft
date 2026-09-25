@@ -1,9 +1,10 @@
 import type { ContentMessage, TriageResponse } from '@/lib/messages';
 import { removeBadge, renderBadge, type BadgeHandlers } from '@/lib/tweet-badge';
 import { isTopLevelTweet, parseTweet, quickStatusId } from '@/lib/tweet-parser';
-import { computePriority } from '@/lib/triage-priority';
+import { computePriority, isIdeaWorthy } from '@/lib/triage-priority';
 import type { DisplayPrefs, Triage, Tweet } from '@/lib/types';
 import { createVisibilityGate } from '@/lib/visibility-gate';
+import { expandTweet, insertDraft, isPanelMessage } from '@/lib/x-composer';
 import { BADGE_ATTR, SEL } from '@/lib/x-dom-selectors';
 import { isTriageRoute } from '@/lib/x-routes';
 
@@ -25,6 +26,15 @@ export default defineContentScript({
     const entries = new WeakMap<Element, Entry>();
     const observed = new WeakSet<Element>();
     const send = <T>(msg: ContentMessage) => browser.runtime.sendMessage(msg) as Promise<T>;
+
+    // Requests from our side panel (tabs.sendMessage). Page scripts cannot reach this listener.
+    browser.runtime.onMessage.addListener((raw, sender, sendResponse) => {
+      if (sender.id !== browser.runtime.id || sender.tab || !isPanelMessage(raw)) return;
+      const work: Promise<unknown> =
+        raw.type === 'expand-tweet' ? expandTweet(raw.statusId) : insertDraft(raw.statusId, raw.mode, raw.text);
+      work.then(sendResponse, () => sendResponse(raw.type === 'expand-tweet' ? null : 'not_found'));
+      return true;
+    });
 
     void send<DisplayPrefs>({ type: 'get-prefs' })
       .then((p) => (prefs = p))
@@ -54,7 +64,7 @@ export default defineContentScript({
     const renderReady = (article: Element, tweet: Tweet, triage: Triage) => {
       const priority = computePriority(triage, tweet);
       renderBadge(article, { kind: 'ready', priority, triage }, handlersFor(article));
-      setDim(article, prefs.dimLowScore && priority < prefs.minQuality);
+      setDim(article, prefs.dimLowScore && priority < prefs.minQuality && !isIdeaWorthy(triage));
     };
 
     async function evaluate(article: Element): Promise<void> {

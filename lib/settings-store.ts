@@ -21,6 +21,15 @@ export function saveSettings(settings: Settings): Promise<void> {
   return settingsItem.setValue(SettingsSchema.parse(settings));
 }
 
+const MAX_VOICE_SAMPLES = 30;
+
+// Replies the user edited and inserted become voice samples, so drafts drift toward their real style.
+export async function addVoiceSample(text: string): Promise<void> {
+  const s = await getSettings();
+  const samples = [...s.voiceSamples.filter((v) => v !== text), text].slice(-MAX_VOICE_SAMPLES);
+  await saveSettings({ ...s, voiceSamples: samples });
+}
+
 export function toDisplayPrefs(s: Settings): DisplayPrefs {
   return { minQuality: s.minQuality, dimLowScore: s.dimLowScore, debug: s.debug };
 }

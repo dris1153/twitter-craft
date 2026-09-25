@@ -24,6 +24,7 @@ export default defineBackground(() => {
       pendingActionItem
         .setValue({
           nonce: crypto.randomUUID(),
+          at: Date.now(),
           windowId: tab.windowId,
           tabId: tab.id,
           kind: msg.kind,

@@ -11,12 +11,20 @@ export const SEL = {
   // Quoted post is a div[role="link"] inside the parent article, not a nested article.
   quoteCandidate: 'div[role="link"]',
   actionBar: '[role="group"]',
-  replyCount: '[data-testid="reply"]',
-  repostCount: '[data-testid="retweet"], [data-testid="unretweet"]',
-  likeCount: '[data-testid="like"], [data-testid="unlike"]',
+  // Action buttons; their aria-label also carries the exact count.
+  reply: '[data-testid="reply"]',
+  repost: '[data-testid="retweet"], [data-testid="unretweet"]',
+  like: '[data-testid="like"], [data-testid="unlike"]',
   viewsLink: 'a[href$="/analytics"]',
   countText: '[data-testid="app-text-transition-container"]',
   lockIcon: '[data-testid="icon-lock"]',
+  // Composer. tweetTextarea_0 also exists outside dialogs (home "What's happening", status-page inline reply):
+  // always scope these to the reply/quote dialog.
+  dialog: '[role="dialog"]',
+  composer: '[data-testid="tweetTextarea_0"]',
+  postButton: '[data-testid="tweetButton"]',
+  quoteMenuItem: 'a[href*="/compose/"][role="menuitem"]',
+  menuItem: '[role="menuitem"]',
 } as const;
 
 export const BADGE_ATTR = 'data-twitter-craft';

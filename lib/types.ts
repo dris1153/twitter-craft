@@ -11,7 +11,8 @@ export const TweetSchema = z.object({
   isProtected: z.boolean(),
   text: z.string().max(MAX_TEXT),
   truncated: z.boolean(),
-  lang: z.string().max(10),
+  lang: z.string().max(10), // language of the text shown ("vi" when X auto-translated it)
+  originalLang: z.string().max(10), // author's language; use this for replies
   quoted: z
     .object({ authorHandle: z.string().regex(HANDLE), text: z.string().max(MAX_TEXT), isProtected: z.boolean() })
     .nullable(),
@@ -75,3 +76,14 @@ export type Settings = z.infer<typeof SettingsSchema>;
 
 export const DisplayPrefsSchema = SettingsSchema.pick({ minQuality: true, dimLowScore: true, debug: true });
 export type DisplayPrefs = z.infer<typeof DisplayPrefsSchema>;
+
+// "practical" instead of "experience": the model must not invent past events the user never had.
+export const REPLY_ANGLES = ['insight', 'question', 'practical'] as const;
+
+// OpenAI strict structured outputs: nullable (not optional), no tuples.
+export const DraftSchema = z.object({
+  skipReason: z.string().nullable(),
+  replies: z.array(z.object({ angle: z.enum(REPLY_ANGLES), text: z.string() })),
+  quote: z.string().nullable(),
+});
+export type Draft = z.infer<typeof DraftSchema>;
