@@ -3,3 +3,4 @@
 - [Host-level link allowlists](host-level-link-allowlists.md) — hostOf() allowlists trust all of github.com; how to render-test Markdown export
 - [Doc sources for fact-checks](reference_doc_sources.md) — where to curl TypeSafe/OpenAI/Chrome docs; which fetch method works
 - [html-to-image + fontsource gotchas](html-to-image-fontsource-gotchas.md) — silent font failure, render hang, no unicode-range; X GIF vs photo exclusivity
+- [X overlay routes keep page mounted](x-overlay-routes-keep-page-mounted.md) — /compose/post + photo modal change pathname; route-keyed resets must ignore them

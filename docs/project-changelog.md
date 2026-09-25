@@ -1,5 +1,11 @@
 # Project Changelog
 
+## Unreleased
+
+### Changed
+- Post pages (`/{handle}/status/{id}`): only the post and its author's own thread are scored. Other people's replies show a "not scored" badge with Draft/Idea and cost no Jev call (`lib/x-routes.ts` `triageMode`). Quote lists (`/status/{id}/quotes`) and all other feeds are scored as before.
+- Badges survive the reply composer and media viewer: those modals change the URL (`/compose/post`, `/status/{id}/photo/1`) but the page underneath stays, so they are treated as overlays (`isOverlayRoute`) instead of navigations.
+
 ## 0.4.0 (2026-09-25)
 
 **Phase 4: Card PNG + GIF Suggestion — In Progress (Code Complete, Live Test Pending)**
