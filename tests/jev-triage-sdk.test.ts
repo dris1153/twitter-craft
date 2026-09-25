@@ -5,7 +5,7 @@ import { SettingsSchema, type Tweet } from '@/lib/types';
 // Exercises the real AI SDK + TypeSafe provider path with only the network stubbed.
 const tweet: Tweet = {
   id: '42', url: 'https://x.com/a/status/42', authorHandle: 'a', authorName: 'A', isProtected: false,
-  text: 'New eval harness for agents', truncated: false, lang: 'en', quoted: null, hasMedia: false,
+  text: 'New eval harness for agents', truncated: false, lang: 'en', originalLang: 'en', quoted: null, hasMedia: false,
   mediaUrls: [], mediaAlt: [], createdAt: '2026-09-25T00:00:00Z',
   metrics: { replies: 0, reposts: 0, likes: 0, views: 0 }, isReply: false, isAd: false,
 };
@@ -52,7 +52,7 @@ describe('triageWithJev (real SDK path)', () => {
     expect(body.state.author).toBe('@a');
     expect(new Headers(init.headers).get('authorization')).toBe('Bearer test-key');
 
-    expect(t).toMatchObject({ id: '42', quality: 0.75, action: 'reply', topic: 'llm_agents', projectMatch: 'evalkit', replyOpening: 0.7 });
+    expect(t).toMatchObject({ id: '42', quality: 0.8, action: 'reply', topic: 'llm_agents', projectMatch: 'evalkit', replyOpening: 0.7 });
     expect(t.uncertain).toBe(true); // project_match confidence 0.4; topic 0.3 is ignored
   });
 

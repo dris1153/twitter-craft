@@ -11,6 +11,7 @@ describe('ContentMessageSchema validation', () => {
     text: 'Hello',
     truncated: false,
     lang: 'en',
+    originalLang: 'en',
     quoted: null,
     hasMedia: false,
     mediaUrls: [],

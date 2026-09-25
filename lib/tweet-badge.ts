@@ -1,3 +1,4 @@
+import { isIdeaWorthy } from './triage-priority';
 import { findQuote } from './tweet-parser';
 import type { Triage, TriageError } from './types';
 import { BADGE_ATTR, SEL } from './x-dom-selectors';
@@ -67,6 +68,7 @@ function content(state: BadgeState, handlers: BadgeHandlers): HTMLElement[] {
   const tier = priority >= 70 ? 'hi' : priority >= 40 ? 'mid' : 'lo';
   const scores = `quality ${t.quality.toFixed(2)} · reply opening ${t.replyOpening.toFixed(2)} · build idea ${t.buildIdea.toFixed(2)}`;
   const parts = [span(String(priority), `pill ${tier}`, scores), span(t.action), span(t.topic)];
+  if (isIdeaWorthy(t)) parts.push(span('💡', '', `Worth saving as an idea (build idea ${t.buildIdea.toFixed(2)})`));
   if (t.projectMatch !== 'none') parts.push(span(`↗ ${t.projectMatch}`));
   if (t.uncertain) parts.push(span('?', '', 'Jev is not confident about this one'));
   if (t.botInstructions > 0.5) parts.push(span('⚠ bait', '', 'Post contains instructions aimed at bots/AI'));

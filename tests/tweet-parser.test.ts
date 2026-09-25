@@ -73,6 +73,30 @@ describe('parseTweet', () => {
   });
 });
 
+describe('parseTweet on a real capture (Vietnamese UI, auto-translated quote tweet)', () => {
+  it('keeps the author language behind X auto-translate and reads exact counts', () => {
+    const t = parseTweet(load('translated-quote'))!;
+    expect(t).toMatchObject({
+      id: '2103140058434031831',
+      authorHandle: 'BeamManP',
+      authorName: 'ビームマンＰ ver40',
+      lang: 'vi',
+      originalLang: 'ja',
+      createdAt: '2026-09-24T15:10:39.000Z',
+      hasMedia: false, // the video belongs to the quoted post
+      isAd: false,
+      isProtected: false,
+    });
+    expect(t.text).toMatch(/^Nhưng cách diễn đạt/);
+    expect(t.quoted?.text).toMatch(/^Vì noise của Carl/);
+    expect(t.metrics).toEqual({ replies: 0, reposts: 11, likes: 161, views: 16989 });
+  });
+
+  it('uses the shown language when the post is not translated', () => {
+    expect(parseTweet(load('text-only'))!.originalLang).toBe('en');
+  });
+});
+
 describe('helpers', () => {
   it('quickStatusId ignores the quoted post', () => {
     expect(quickStatusId(load('quote-with-commentary'))).toBe('1839000000000000003');

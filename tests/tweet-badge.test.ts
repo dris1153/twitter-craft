@@ -84,6 +84,14 @@ describe('renderBadge', () => {
     expect(warn.title).toMatch(/key/i);
   });
 
+  it('marks idea-worthy posts, but not bait', () => {
+    const article = setup();
+    renderBadge(article, { kind: 'ready', priority: 30, triage: { ...triage, buildIdea: 0.8 } }, handlers());
+    expect(shadowOf(article).textContent).toContain('💡');
+    renderBadge(article, { kind: 'ready', priority: 30, triage: { ...triage, buildIdea: 0.8, botInstructions: 0.9 } }, handlers());
+    expect(shadowOf(article).textContent).not.toContain('💡');
+  });
+
   it('flags bait and uncertainty', () => {
     const article = setup();
     renderBadge(article, { kind: 'ready', priority: 50, triage: { ...triage, uncertain: true, botInstructions: 0.9 } }, handlers());

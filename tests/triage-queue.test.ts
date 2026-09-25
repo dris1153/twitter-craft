@@ -8,7 +8,7 @@ vi.mock('@/lib/jev-triage', () => ({ triageWithJev: (...args: unknown[]) => tria
 
 const tweet = (id: string): Tweet => ({
   id, url: `https://x.com/a/status/${id}`, authorHandle: 'a', authorName: 'A', isProtected: false,
-  text: `tweet ${id}`, truncated: false, lang: 'en', quoted: null, hasMedia: false, mediaUrls: [], mediaAlt: [],
+  text: `tweet ${id}`, truncated: false, lang: 'en', originalLang: 'en', quoted: null, hasMedia: false, mediaUrls: [], mediaAlt: [],
   createdAt: '2026-09-25T00:00:00Z', metrics: { replies: 0, reposts: 0, likes: 0, views: 0 }, isReply: false, isAd: false,
 });
 const result = (id: string): Triage => ({

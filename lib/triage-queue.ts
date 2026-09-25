@@ -86,7 +86,6 @@ async function run(job: Job): Promise<void> {
     }
     return;
   }
-  if (job.settings.debug) console.log('[twitter-craft] triage', job.tweet.url, job.tweet.text.slice(0, 80), result);
   job.resolve({ ok: true, triage: result });
   // A failed cache write (e.g. session quota) must not throw away an answer we already paid for.
   await storage.setItem(job.key, result).catch((err) => console.warn('[twitter-craft] cache write failed', err));

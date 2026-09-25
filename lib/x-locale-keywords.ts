@@ -4,7 +4,24 @@ export const KEYWORDS = {
   protectedLabel: ['Tài khoản được bảo vệ', 'Protected account'],
   replyingTo: ['Đang trả lời', 'Replying to'],
   genericImageAlt: ['Hình ảnh', 'Image'],
+  // X auto-translate label, e.g. "Được dịch từ Tiếng Nhật"; the tweetText then carries lang="vi".
+  translatedFrom: ['Được dịch từ ', 'Translated from '],
+  quoteMenu: ['Trích dẫn', 'Quote'],
 } as const;
+
+const LANGUAGE_CODES: Record<string, string> = {
+  'tiếng anh': 'en', english: 'en', 'tiếng việt': 'vi', vietnamese: 'vi', 'tiếng nhật': 'ja', japanese: 'ja',
+  'tiếng trung': 'zh', chinese: 'zh', 'tiếng hàn': 'ko', korean: 'ko', 'tiếng tây ban nha': 'es', spanish: 'es',
+  'tiếng pháp': 'fr', french: 'fr', 'tiếng đức': 'de', german: 'de', 'tiếng bồ đào nha': 'pt', portuguese: 'pt',
+};
+
+// Returns the source language code of an auto-translated post, 'und' if unknown, null if not a translation label.
+export function translatedFromLang(label: string | null | undefined): string | null {
+  const text = (label ?? '').trim();
+  const prefix = KEYWORDS.translatedFrom.find((k) => text.startsWith(k));
+  if (!prefix) return null;
+  return LANGUAGE_CODES[text.slice(prefix.length).trim().toLowerCase()] ?? 'und';
+}
 
 const SUFFIX: Record<string, number> = { k: 1e3, n: 1e3, m: 1e6, tr: 1e6, b: 1e9, t: 1e9 };
 

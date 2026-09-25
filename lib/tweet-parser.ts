@@ -1,6 +1,6 @@
 import type { Tweet } from './types';
 import { SEL } from './x-dom-selectors';
-import { KEYWORDS, parseCount } from './x-locale-keywords';
+import { KEYWORDS, parseCount, translatedFromLang } from './x-locale-keywords';
 
 const STATUS_HREF = /^\/([A-Za-z0-9_]{1,15})\/status\/(\d{1,25})(?:\/|$|\?)/;
 
@@ -66,7 +66,17 @@ export function quickStatusId(article: Element): string | null {
 
 function count(article: Element, quote: Element | null, selector: string): number {
   const el = outside(article, quote, selector)[0];
-  return parseCount(el?.querySelector(SEL.countText)?.textContent);
+  // aria-label starts with the exact number ("16989 lượt xem…"); the visible text is rounded ("16 N").
+  const exact = el?.getAttribute('aria-label')?.match(/^\s*(\d[\d.,]*)/)?.[1];
+  return parseCount(exact ?? el?.querySelector(SEL.countText)?.textContent);
+}
+
+function originalLang(article: Element, quote: Element | null, shownLang: string): string {
+  for (const span of outside(article, quote, 'span')) {
+    const lang = translatedFromLang(span.textContent);
+    if (lang) return lang;
+  }
+  return shownLang;
 }
 
 function isAd(article: Element): boolean {
@@ -94,6 +104,7 @@ export function parseTweet(article: Element): Tweet | null {
     .map((p) => p.alt.trim())
     .filter((a) => a && !hasKeyword(KEYWORDS.genericImageAlt, a))
     .slice(0, 4);
+  const lang = textEl?.getAttribute('lang') ?? 'und';
 
   return {
     id: link.id,
@@ -103,7 +114,8 @@ export function parseTweet(article: Element): Tweet | null {
     isProtected: isProtected(article),
     text: textOf(textEl),
     truncated: outside(article, quote, SEL.showMore).length > 0,
-    lang: textEl?.getAttribute('lang') ?? 'und',
+    lang,
+    originalLang: originalLang(article, quote, lang),
     quoted: quote
       ? { authorHandle: handleIn(quote), text: textOf(quote.querySelector(SEL.tweetText)), isProtected: isProtected(quote) }
       : null,
@@ -112,9 +124,9 @@ export function parseTweet(article: Element): Tweet | null {
     mediaAlt,
     createdAt: link.createdAt,
     metrics: {
-      replies: count(article, quote, SEL.replyCount),
-      reposts: count(article, quote, SEL.repostCount),
-      likes: count(article, quote, SEL.likeCount),
+      replies: count(article, quote, SEL.reply),
+      reposts: count(article, quote, SEL.repost),
+      likes: count(article, quote, SEL.like),
       views: count(article, quote, SEL.viewsLink),
     },
     isReply: isReply(article, quote),

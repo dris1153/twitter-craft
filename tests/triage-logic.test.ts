@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildQuestions, mapAnswers, type JevAnswers } from '@/lib/jev-triage';
+import { buildQuestions, mapAnswers, qualityFrom, type JevAnswers } from '@/lib/jev-triage';
 import { triageSettingsHash } from '@/lib/settings-store';
-import { computePriority, freshness } from '@/lib/triage-priority';
+import { computePriority, freshnessBonus, isIdeaWorthy } from '@/lib/triage-priority';
 import { SettingsSchema, type Triage } from '@/lib/types';
-import { parseCount } from '@/lib/x-locale-keywords';
+import { parseCount, translatedFromLang } from '@/lib/x-locale-keywords';
 
 // SDK-shaped answers (ai experimental_evaluate). Replace with a recorded live response once a key is set up.
 const answers = (over: Partial<JevAnswers> = {}): JevAnswers => ({
@@ -49,28 +49,52 @@ describe('mapAnswers', () => {
     expect(Object.keys(q.project_match.criteria)).toEqual(['none', 'project_0', 'project_1']);
     expect(q.quality.criteria).toHaveLength(5);
   });
+
+  it('tells Jev that sharing a prompt is not bait', () => {
+    const q = buildQuestions({ interests: ['AI'], projects: [] });
+    expect(q.bot_instructions.criteria.false).toMatch(/share, discuss or quote prompts/);
+  });
 });
 
 describe('priority', () => {
   const triage: Triage = {
-    id: '1', quality: 1, action: 'reply', topic: 'ai_ml', replyOpening: 1,
+    id: '1', quality: 0.6, action: 'reply', topic: 'ai_ml', replyOpening: 0.4,
     projectMatch: 'none', buildIdea: 0, botInstructions: 0, uncertain: false,
   };
   const now = Date.parse('2026-09-25T12:00:00Z');
+  const at = (createdAt: string, likes = 0) => ({ createdAt, metrics: { replies: 0, reposts: 0, likes, views: 0 } });
 
-  it('decays with age', () => {
-    expect(freshness(10)).toBe(1);
-    expect(freshness(60)).toBe(0.6);
-    expect(freshness(600)).toBe(0.3);
-    expect(freshness(2000)).toBe(0);
-    const fresh = computePriority(triage, { createdAt: '2026-09-25T11:50:00Z', metrics: { replies: 0, reposts: 0, likes: 0, views: 0 } }, now);
-    const old = computePriority(triage, { createdAt: '2026-09-23T11:50:00Z', metrics: { replies: 0, reposts: 0, likes: 0, views: 0 } }, now);
-    expect(fresh).toBe(100);
-    expect(old).toBe(85);
+  it('adds a freshness bonus but never penalizes old posts', () => {
+    expect(freshnessBonus(10)).toBe(0.1);
+    expect(freshnessBonus(120)).toBe(0.05);
+    expect(freshnessBonus(900)).toBe(0);
+    expect(computePriority(triage, at('2026-09-25T11:50:00Z'), now)).toBe(65);
+    expect(computePriority(triage, at('2026-09-23T11:50:00Z'), now)).toBe(55);
+    expect(computePriority(triage, at(''), now)).toBe(55);
   });
 
-  it('handles a missing timestamp', () => {
-    expect(computePriority(triage, { createdAt: '', metrics: { replies: 0, reposts: 0, likes: 0, views: 0 } }, now)).toBe(85);
+  it('treats idea-worthiness separately from reply priority', () => {
+    expect(isIdeaWorthy({ ...triage, buildIdea: 0.7 })).toBe(true);
+    expect(isIdeaWorthy({ ...triage, buildIdea: 0.4 })).toBe(false);
+    expect(isIdeaWorthy({ ...triage, buildIdea: 0.9, botInstructions: 0.8 })).toBe(false);
+  });
+
+  it('boosts posts gaining likes fast and caps at 100', () => {
+    expect(computePriority(triage, at('2026-09-25T11:50:00Z', 100), now)).toBe(70);
+    expect(computePriority({ ...triage, quality: 1, replyOpening: 1 }, at('2026-09-25T11:50:00Z'), now)).toBe(100);
+  });
+});
+
+describe('qualityFrom', () => {
+  it('falls back to the linear score without a distribution', () => {
+    expect(qualityFrom({ score: 2 })).toBe(0.5);
+  });
+
+  it('spreads bait and substantive posts apart', () => {
+    const bait = qualityFrom({ score: 0.7, probabilities: { 0: 0.4, 1: 0.5, 2: 0.1 } });
+    const solid = qualityFrom({ score: 3, probabilities: { 2: 0.2, 3: 0.6, 4: 0.2 } });
+    expect(bait).toBeCloseTo(0.095);
+    expect(solid).toBeCloseTo(0.8);
   });
 });
 
@@ -79,6 +103,17 @@ describe('parseCount', () => {
     ['12', 12], ['1.234', 1234], ['1,234', 1234], ['1,2 N', 1200], ['56 N', 56000],
     ['2,5 Tr', 2_500_000], ['1.2K', 1200], ['3.4M', 3_400_000], ['', 0], ['abc', 0],
   ])('%s → %d', (raw, expected) => expect(parseCount(raw)).toBe(expected));
+});
+
+describe('translatedFromLang', () => {
+  it.each([
+    ['Được dịch từ Tiếng Nhật', 'ja'],
+    ['Được dịch từ Tiếng Tây Ban Nha', 'es'],
+    ['Translated from English', 'en'],
+    ['Được dịch từ Tiếng Swahili', 'und'],
+    ['Hiện bản gốc', null],
+    ['', null],
+  ])('%s → %s', (label, expected) => expect(translatedFromLang(label)).toBe(expected));
 });
 
 describe('triageSettingsHash', () => {
