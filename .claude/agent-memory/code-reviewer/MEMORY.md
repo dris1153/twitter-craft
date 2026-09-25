@@ -1,0 +1,2 @@
+- [Research reports unreliable](project-research-reports-unreliable.md) — twitter-craft research had wrong X DOM/Jev/WXT claims; fact-check before accepting
+- [Jev SDK shapes + retry gotcha](jev-api-shape-differences.md) — verified evaluate answer shapes; SDK retry+abort hides 429 from queue pause
